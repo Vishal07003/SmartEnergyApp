@@ -3,4 +3,4 @@ export * from './room';
 export * from './device';
 export * from './energy';
 export * from './alert';
-
+export * from './analytics';

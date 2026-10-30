@@ -46,6 +46,11 @@ class MockApiService {
     return [...this.alerts];
   }
 
+  async getAnalyticsByHorizon(horizon: import('../../types').TimeHorizon): Promise<import('../../types').PeriodAnalyticsData> {
+    const { mockAnalyticsData } = await import('../mockData/analyticsData');
+    return { ...mockAnalyticsData[horizon] };
+  }
+
   async acknowledgeAlert(alertId: string): Promise<boolean> {
     const alert = this.alerts.find(a => a.id === alertId);
     if (alert) {

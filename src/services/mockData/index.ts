@@ -1,3 +1,5 @@
+export * from './analyticsData';
+
 import {
   StaffUser,
   Room,
