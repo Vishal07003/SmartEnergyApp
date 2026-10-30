@@ -5,6 +5,7 @@ import { RootStackParamList } from './types';
 import { AuthNavigator } from './AuthNavigator';
 import { MainTabNavigator } from './MainTabNavigator';
 import { RoomDetailsScreen } from '../screens/rooms/RoomDetailsScreen';
+import { DeviceDetailsScreen } from '../screens/devices/DeviceDetailsScreen';
 import { AlertsScreen } from '../screens/alerts/AlertsScreen';
 import { Colors } from '../constants/theme';
 
@@ -36,6 +37,11 @@ export const RootNavigator: React.FC = () => {
           name="RoomDetails"
           component={RoomDetailsScreen}
           options={({ route }) => ({ title: route.params.roomName })}
+        />
+        <Stack.Screen
+          name="DeviceDetails"
+          component={DeviceDetailsScreen}
+          options={({ route }) => ({ title: route.params.deviceName })}
         />
         <Stack.Screen
           name="Alerts"
