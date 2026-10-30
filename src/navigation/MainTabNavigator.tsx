@@ -2,6 +2,13 @@ import React from 'react';
 import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  House,
+  DoorOpen,
+  Cpu,
+  ChartColumn,
+  UserRound,
+} from 'lucide-react-native';
 import { MainTabParamList } from './types';
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
 import { RoomsScreen } from '../screens/rooms/RoomsScreen';
@@ -9,37 +16,32 @@ import { DevicesScreen } from '../screens/devices/DevicesScreen';
 import { AnalyticsScreen } from '../screens/analytics/AnalyticsScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { Colors, Typography } from '../constants/theme';
-import { Icon, IconName } from '../components/common/Icon';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+
+const INACTIVE_COLOR = '#64748B';
+const ACTIVE_COLOR = '#087F5B';
+const ICON_SIZE = 24;
 
 export const MainTabNavigator: React.FC = () => {
   const insets = useSafeAreaInsets();
 
   // Bottom navigation height accounting for Android edge-to-edge system gestures
   const bottomInset = insets.bottom;
-  const baseTabBarHeight = 60;
+  const baseTabBarHeight = 64;
   const totalTabBarHeight = baseTabBarHeight + (bottomInset > 0 ? bottomInset - 4 : 8);
-
-  const renderTabIcon = (iconName: IconName, focused: boolean) => (
-    <Icon
-      name={iconName}
-      size={20}
-      color={focused ? Colors.primary : Colors.textMuted}
-    />
-  );
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarHideOnKeyboard: true, // Prevents Android keyboard from pushing tab bar upward
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textMuted,
+        tabBarHideOnKeyboard: true,
+        tabBarActiveTintColor: ACTIVE_COLOR,
+        tabBarInactiveTintColor: INACTIVE_COLOR,
         tabBarLabelStyle: {
           fontSize: Typography.sizes.xxs,
           fontWeight: Typography.weights.semibold,
-          marginTop: -2,
+          marginTop: 2,
           marginBottom: 2,
         },
         tabBarStyle: {
@@ -66,7 +68,13 @@ export const MainTabNavigator: React.FC = () => {
         component={DashboardScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ focused }) => renderTabIcon('bolt', focused),
+          tabBarIcon: ({ color }) => (
+            <House
+              color={color}
+              size={ICON_SIZE}
+              strokeWidth={color === ACTIVE_COLOR ? 2.3 : 1.8}
+            />
+          ),
         }}
       />
       <Tab.Screen
@@ -74,7 +82,13 @@ export const MainTabNavigator: React.FC = () => {
         component={RoomsScreen}
         options={{
           tabBarLabel: 'Rooms',
-          tabBarIcon: ({ focused }) => renderTabIcon('room', focused),
+          tabBarIcon: ({ color }) => (
+            <DoorOpen
+              color={color}
+              size={ICON_SIZE}
+              strokeWidth={color === ACTIVE_COLOR ? 2.3 : 1.8}
+            />
+          ),
         }}
       />
       <Tab.Screen
@@ -82,7 +96,13 @@ export const MainTabNavigator: React.FC = () => {
         component={DevicesScreen}
         options={{
           tabBarLabel: 'Devices',
-          tabBarIcon: ({ focused }) => renderTabIcon('device', focused),
+          tabBarIcon: ({ color }) => (
+            <Cpu
+              color={color}
+              size={ICON_SIZE}
+              strokeWidth={color === ACTIVE_COLOR ? 2.3 : 1.8}
+            />
+          ),
         }}
       />
       <Tab.Screen
@@ -90,7 +110,13 @@ export const MainTabNavigator: React.FC = () => {
         component={AnalyticsScreen}
         options={{
           tabBarLabel: 'Analytics',
-          tabBarIcon: ({ focused }) => renderTabIcon('analytics', focused),
+          tabBarIcon: ({ color }) => (
+            <ChartColumn
+              color={color}
+              size={ICON_SIZE}
+              strokeWidth={color === ACTIVE_COLOR ? 2.3 : 1.8}
+            />
+          ),
         }}
       />
       <Tab.Screen
@@ -98,7 +124,13 @@ export const MainTabNavigator: React.FC = () => {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
-          tabBarIcon: ({ focused }) => renderTabIcon('user', focused),
+          tabBarIcon: ({ color }) => (
+            <UserRound
+              color={color}
+              size={ICON_SIZE}
+              strokeWidth={color === ACTIVE_COLOR ? 2.3 : 1.8}
+            />
+          ),
         }}
       />
     </Tab.Navigator>
