@@ -14,16 +14,15 @@ export const HardwareSensorSummaryBanner: React.FC<HardwareSensorSummaryBannerPr
 }) => {
   return (
     <View style={styles.container}>
-      <View style={styles.topRow}>
-        <View style={styles.hardwareBadge}>
-          <Cpu size={14} color="#34D399" />
-          <Text style={styles.hardwareTitle}>ESP32 Sensor Array</Text>
+      <View style={styles.contentRow}>
+        <View style={styles.leftInfo}>
+          <Cpu size={15} color="#34D399" />
+          <Text style={styles.title}>ESP32 Sensor Array</Text>
+          <View style={styles.bullet} />
+          <Text style={styles.nodeCount}>{totalSensors} Nodes Online</Text>
         </View>
-        <Text style={styles.confidenceScore}>{overallConfidence}% ML Confidence</Text>
+        <Text style={styles.confidenceScore}>{overallConfidence}% Conf.</Text>
       </View>
-      <Text style={styles.statusText}>
-        {totalSensors} Nodes Online • PIR, Lux, Sound, Temp & CT Clamp Fusion
-      </Text>
     </View>
   );
 };
@@ -31,34 +30,40 @@ export const HardwareSensorSummaryBanner: React.FC<HardwareSensorSummaryBannerPr
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.heroNavy,
-    borderRadius: BorderRadius.card,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.sm,
   },
-  topRow: {
+  contentRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
   },
-  hardwareBadge: {
+  leftInfo: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  hardwareTitle: {
+  title: {
     fontSize: Typography.sizes.xs,
     fontWeight: Typography.weights.bold,
     color: Colors.textInverse,
     marginLeft: 6,
-    letterSpacing: 0.5,
+  },
+  bullet: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: '#94A3B8',
+    marginHorizontal: 8,
+  },
+  nodeCount: {
+    fontSize: Typography.sizes.xxs,
+    color: '#94A3B8',
   },
   confidenceScore: {
     fontSize: Typography.sizes.xs,
     fontWeight: Typography.weights.bold,
     color: '#34D399',
-  },
-  statusText: {
-    fontSize: Typography.sizes.xxs,
-    color: '#94A3B8',
   },
 });

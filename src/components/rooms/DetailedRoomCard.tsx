@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
 import { OccupancyBadge } from '../common/Badge';
-import { Button } from '../common/Button';
 import { Room } from '../../types';
 
 interface DetailedRoomCardProps {
@@ -37,14 +36,14 @@ export const DetailedRoomCard: React.FC<DetailedRoomCardProps> = ({
       onPress={() => onPress(room)}
       style={[
         styles.card,
-        isIdle ? styles.idleBorder : null,
+        isIdle ? styles.idleCard : null,
         style,
       ]}
     >
-      {/* Top Header: Room Name, Number, Floor & Occupancy Badge */}
+      {/* Header: Room Name, Room No / Floor & Occupancy Badge + Switch */}
       <View style={styles.headerRow}>
         <View style={styles.titleArea}>
-          <View style={styles.roomNameRow}>
+          <View style={styles.nameRow}>
             <View
               style={[
                 styles.statusDot,
@@ -61,15 +60,15 @@ export const DetailedRoomCard: React.FC<DetailedRoomCardProps> = ({
               {room.name}
             </Text>
           </View>
-          <Text style={styles.locationSubtitle}>
-            Room {room.roomNumber} • {room.floor} • {room.building}
+          <Text style={styles.subtitle}>
+            Room {room.roomNumber} • {room.floor}
           </Text>
         </View>
 
         <View style={styles.headerRight}>
           <OccupancyBadge state={room.occupancy.state} />
           {onToggleMasterRelay && (
-            <View style={styles.switchContainer}>
+            <View style={styles.switchWrapper}>
               <Switch
                 value={isPoweredOn}
                 onValueChange={val => onToggleMasterRelay(room.id, val)}
@@ -81,78 +80,60 @@ export const DetailedRoomCard: React.FC<DetailedRoomCardProps> = ({
         </View>
       </View>
 
-      {/* AI Anomaly or Motion Notification Strip */}
-      {isIdle ? (
-        <View style={styles.anomalyBanner}>
-          <Text style={styles.anomalyTitle}>
-            Automated Anomaly Alert: Zero PIR motion for {room.occupancy.idleTimerMinutes}m
-          </Text>
-          <Text style={styles.anomalyDesc}>
-            Predicts empty in 2 mins. {room.electrical.activeApplianceCount} active appliances drawing idle load.
+      {/* Compact Anomaly Warning Banner (Only when in IDLE_TRANSITION) */}
+      {isIdle && (
+        <View style={styles.anomalyBadgeRow}>
+          <View style={styles.warningTag}>
+            <Text style={styles.warningTagText}>IDLE</Text>
+          </View>
+          <Text style={styles.anomalyText} numberOfLines={1}>
+            No motion {room.occupancy.idleTimerMinutes}m • {room.electrical.activeApplianceCount} loads active
           </Text>
           {onAutoShutdown && (
-            <Button
-              title="Auto-Shutdown"
+            <TouchableOpacity
               onPress={() => onAutoShutdown(room)}
-              variant="danger"
-              style={styles.shutdownBtn}
-              textStyle={styles.shutdownBtnText}
-            />
+              style={styles.shutdownAction}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.shutdownActionText}>Cut Power</Text>
+            </TouchableOpacity>
           )}
-        </View>
-      ) : (
-        <View style={styles.motionBanner}>
-          <Text style={styles.motionText}>
-            {isActive
-              ? 'Continuous Motion Detected • Occupancy Confirmed'
-              : 'Secured Vacancy • Non-essential loads isolated'}
-          </Text>
-          <Text style={styles.confidenceText}>
-            ML: {(room.occupancy.confidenceScore * 100).toFixed(0)}% Conf.
-          </Text>
         </View>
       )}
 
-      {/* 3-Column Environmental & Telemetry Readouts (from Reference Mockup) */}
-      <View style={styles.readoutGrid}>
-        <View style={styles.readoutTile}>
-          <Text style={styles.readoutLabel}>CLIMATE</Text>
-          <Text style={styles.readoutValue}>{room.sensors.temperature}°C</Text>
-          <Text style={styles.readoutSub}>{room.sensors.humidity}% Humidity</Text>
+      {/* 3 Primary Metrics: Temperature, Lux, Live Power */}
+      <View style={styles.metricsRow}>
+        <View style={styles.metricItem}>
+          <Text style={styles.metricLabel}>TEMP</Text>
+          <Text style={styles.metricValue}>{room.sensors.temperature}°C</Text>
         </View>
 
-        <View style={styles.tileDivider} />
+        <View style={styles.metricDivider} />
 
-        <View style={styles.readoutTile}>
-          <Text style={styles.readoutLabel}>ILLUMINANCE</Text>
-          <Text style={styles.readoutValue}>{room.sensors.ambientLight} Lux</Text>
-          <Text style={styles.readoutSub}>
-            {room.sensors.ambientLight > 400 ? 'Daylit Zone' : 'Dim Ambient'}
-          </Text>
+        <View style={styles.metricItem}>
+          <Text style={styles.metricLabel}>ILLUMINANCE</Text>
+          <Text style={styles.metricValue}>{room.sensors.ambientLight} Lux</Text>
         </View>
 
-        <View style={styles.tileDivider} />
+        <View style={styles.metricDivider} />
 
-        <View style={styles.readoutTile}>
-          <Text style={styles.readoutLabel}>LIVE POWER</Text>
+        <View style={styles.metricItem}>
+          <Text style={styles.metricLabel}>LIVE POWER</Text>
           <Text
             style={[
-              styles.readoutValue,
+              styles.metricValue,
               isPoweredOn ? styles.powerActive : styles.powerStandby,
             ]}
           >
             {room.electrical.livePowerWatts} W
           </Text>
-          <Text style={styles.readoutSub}>
-            {room.electrical.todayEnergyKwh} kWh Today
-          </Text>
         </View>
       </View>
 
-      {/* Card Footer: Connected Devices, Details Arrow */}
+      {/* Compact Footer */}
       <View style={styles.footerRow}>
-        <Text style={styles.devicesText}>
-          {room.electrical.activeApplianceCount} of {room.electrical.totalApplianceCount} Appliances Active
+        <Text style={styles.footerApplianceText}>
+          {room.electrical.activeApplianceCount} of {room.electrical.totalApplianceCount} loads active
         </Text>
         <Text style={styles.detailsLink}>Details ›</Text>
       </View>
@@ -163,131 +144,123 @@ export const DetailedRoomCard: React.FC<DetailedRoomCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.card,
-    padding: Spacing.base,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
-  idleBorder: {
-    borderColor: '#FBD38D',
+  idleCard: {
+    borderColor: '#FEEBC8',
     backgroundColor: '#FFFCF8',
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.sm,
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
   },
   titleArea: {
     flex: 1,
-    marginRight: Spacing.sm,
+    marginRight: Spacing.xs,
   },
-  roomNameRow: {
+  nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     marginRight: 6,
   },
   roomName: {
-    fontSize: Typography.sizes.base,
+    fontSize: Typography.sizes.sm,
     fontWeight: Typography.weights.bold,
     color: Colors.textMain,
     flex: 1,
   },
-  locationSubtitle: {
-    fontSize: Typography.sizes.xs,
+  subtitle: {
+    fontSize: Typography.sizes.xxs,
     color: Colors.textMuted,
-    marginTop: 2,
+    marginTop: 1,
   },
   headerRight: {
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  switchContainer: {
-    marginTop: Spacing.xs,
+  switchWrapper: {
+    marginLeft: 6,
   },
-  anomalyBanner: {
+  anomalyBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFF5F5',
     borderWidth: 1,
     borderColor: '#FED7D7',
-    borderRadius: BorderRadius.sm,
-    padding: Spacing.sm,
-    marginVertical: Spacing.sm,
-  },
-  anomalyTitle: {
-    fontSize: Typography.sizes.xs,
-    fontWeight: Typography.weights.bold,
-    color: Colors.danger,
-    marginBottom: 2,
-  },
-  anomalyDesc: {
-    fontSize: Typography.sizes.xxs,
-    color: Colors.textMain,
-    lineHeight: 16,
-    marginBottom: Spacing.xs,
-  },
-  shutdownBtn: {
-    height: 32,
-    paddingHorizontal: Spacing.md,
-    alignSelf: 'flex-start',
     borderRadius: BorderRadius.xs,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    marginVertical: 4,
   },
-  shutdownBtnText: {
+  warningTag: {
+    backgroundColor: Colors.danger,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 2,
+    marginRight: 6,
+  },
+  warningTagText: {
     fontSize: Typography.sizes.xxs,
+    fontWeight: Typography.weights.bold,
+    color: Colors.textInverse,
   },
-  motionBanner: {
+  anomalyText: {
+    fontSize: Typography.sizes.xxs,
+    color: Colors.danger,
+    fontWeight: Typography.weights.medium,
+    flex: 1,
+  },
+  shutdownAction: {
+    backgroundColor: Colors.dangerLight,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.xs,
+    marginLeft: 4,
+  },
+  shutdownActionText: {
+    fontSize: Typography.sizes.xxs,
+    color: Colors.danger,
+    fontWeight: Typography.weights.bold,
+  },
+  metricsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: Colors.surfaceSubtle,
     borderRadius: BorderRadius.sm,
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-    marginVertical: Spacing.xs,
-  },
-  motionText: {
-    fontSize: Typography.sizes.xxs,
-    color: Colors.textMuted,
-    flex: 1,
-  },
-  confidenceText: {
-    fontSize: Typography.sizes.xxs,
-    color: Colors.primary,
-    fontWeight: Typography.weights.semibold,
-    marginLeft: Spacing.xs,
-  },
-  readoutGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceSubtle,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: 6,
     paddingHorizontal: Spacing.md,
-    marginTop: Spacing.sm,
+    marginTop: 4,
   },
-  readoutTile: {
+  metricItem: {
     flex: 1,
     alignItems: 'center',
   },
-  tileDivider: {
+  metricDivider: {
     width: 1,
-    height: 32,
+    height: 20,
     backgroundColor: Colors.border,
   },
-  readoutLabel: {
+  metricLabel: {
     fontSize: Typography.sizes.xxs,
     fontWeight: Typography.weights.semibold,
     color: Colors.textMuted,
-    marginBottom: 2,
+    marginBottom: 1,
     letterSpacing: 0.5,
   },
-  readoutValue: {
-    fontSize: Typography.sizes.sm,
+  metricValue: {
+    fontSize: Typography.sizes.xs,
     fontWeight: Typography.weights.bold,
     color: Colors.textMain,
   },
@@ -297,26 +270,19 @@ const styles = StyleSheet.create({
   powerStandby: {
     color: Colors.textMuted,
   },
-  readoutSub: {
-    fontSize: Typography.sizes.xxs,
-    color: Colors.textSubtle,
-    marginTop: 2,
-  },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Spacing.sm,
-    paddingTop: Spacing.xs,
+    marginTop: 6,
   },
-  devicesText: {
+  footerApplianceText: {
     fontSize: Typography.sizes.xxs,
     color: Colors.textMuted,
   },
   detailsLink: {
-    fontSize: Typography.sizes.xs,
+    fontSize: Typography.sizes.xxs,
     fontWeight: Typography.weights.semibold,
     color: Colors.primary,
   },
 });
-

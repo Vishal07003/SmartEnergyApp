@@ -29,13 +29,21 @@ export const DetailedDeviceCard: React.FC<DetailedDeviceCardProps> = ({
 
   const totalWatts = device.channels.reduce((sum, ch) => sum + (ch.isOn ? ch.powerWatts : 0), 0);
 
+  // Shorten device title for clean industrial aesthetics
+  const displayTitle = device.name
+    .replace('ESP32 Node - ', '')
+    .replace('ESP32 Smart Controller - ', '')
+    .replace('ESP32 Sensor Gateway - ', '')
+    .replace('ESP32 Master Relay - ', '')
+    .replace('ESP32 Environmental & Lighting Hub', 'Lighting & Enviro Hub');
+
   return (
     <TouchableOpacity
       activeOpacity={0.92}
       onPress={() => onPress(device)}
       style={[styles.card, isDegraded ? styles.degradedBorder : null, style]}
     >
-      {/* Header: Name, Room, Hardware ID & Master Switch */}
+      {/* Header: Compact Name, Room Subtitle & Master Switch */}
       <View style={styles.headerRow}>
         <View style={styles.titleInfo}>
           <View style={styles.nameRow}>
@@ -52,7 +60,7 @@ export const DetailedDeviceCard: React.FC<DetailedDeviceCardProps> = ({
               ]}
             />
             <Text style={styles.nameText} numberOfLines={1}>
-              {device.name}
+              {displayTitle}
             </Text>
           </View>
           <Text style={styles.roomSubtitle}>
@@ -71,7 +79,7 @@ export const DetailedDeviceCard: React.FC<DetailedDeviceCardProps> = ({
         </View>
       </View>
 
-      {/* Telemetry and Metrics Bar */}
+      {/* 3 Primary Metrics: Live Power, Runtime, Wi-Fi Signal */}
       <View style={styles.metricsBar}>
         <View style={styles.metricItem}>
           <Text style={styles.metricLabel}>LIVE POWER</Text>
@@ -83,7 +91,7 @@ export const DetailedDeviceCard: React.FC<DetailedDeviceCardProps> = ({
         <View style={styles.metricDivider} />
 
         <View style={styles.metricItem}>
-          <Text style={styles.metricLabel}>RUNTIME TODAY</Text>
+          <Text style={styles.metricLabel}>RUNTIME</Text>
           <Text style={styles.metricValue}>
             {Math.floor(device.uptimeHours / 24)}d {device.uptimeHours % 24}h
           </Text>
@@ -92,31 +100,17 @@ export const DetailedDeviceCard: React.FC<DetailedDeviceCardProps> = ({
         <View style={styles.metricDivider} />
 
         <View style={styles.metricItem}>
-          <Text style={styles.metricLabel}>WI-FI RSSI</Text>
+          <Text style={styles.metricLabel}>WI-FI SIGNAL</Text>
           <Text style={[styles.metricValue, isDegraded ? styles.warningValue : null]}>
             {device.telemetry.wifiRssi} dBm
           </Text>
         </View>
       </View>
 
-      {/* Channel Breakdown List */}
-      <View style={styles.channelPreviewList}>
-        {device.channels.map(ch => (
-          <View key={ch.channelId} style={styles.channelRow}>
-            <Text style={styles.channelName} numberOfLines={1}>
-              {ch.label}
-            </Text>
-            <Text style={styles.channelWatts}>
-              {ch.isOn ? `${ch.powerWatts} W` : 'OFF'}
-            </Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Footer Info */}
+      {/* Footer Info: Small Last Seen & Clean Details Link */}
       <View style={styles.footerRow}>
-        <Text style={styles.syncText}>Last seen: {device.lastCommunicationTime}</Text>
-        <Text style={styles.detailsLink}>Manage & Config ›</Text>
+        <Text style={styles.syncText}>Seen {device.lastCommunicationTime}</Text>
+        <Text style={styles.detailsLink}>Details ›</Text>
       </View>
     </TouchableOpacity>
   );
@@ -125,11 +119,11 @@ export const DetailedDeviceCard: React.FC<DetailedDeviceCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.card,
-    padding: Spacing.base,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   degradedBorder: {
     borderColor: '#FEEBC8',
@@ -139,32 +133,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   titleInfo: {
     flex: 1,
-    marginRight: Spacing.sm,
+    marginRight: Spacing.xs,
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     marginRight: 6,
   },
   nameText: {
-    fontSize: Typography.sizes.base,
+    fontSize: Typography.sizes.sm,
     fontWeight: Typography.weights.bold,
     color: Colors.textMain,
     flex: 1,
   },
   roomSubtitle: {
-    fontSize: Typography.sizes.xs,
+    fontSize: Typography.sizes.xxs,
     color: Colors.textMuted,
-    marginTop: 2,
+    marginTop: 1,
   },
   switchCol: {
     alignItems: 'flex-end',
@@ -174,10 +168,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: Colors.surfaceSubtle,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    paddingVertical: 6,
     paddingHorizontal: Spacing.md,
-    marginVertical: Spacing.xs,
+    marginTop: 4,
   },
   metricItem: {
     flex: 1,
@@ -185,14 +179,14 @@ const styles = StyleSheet.create({
   },
   metricDivider: {
     width: 1,
-    height: 24,
+    height: 20,
     backgroundColor: Colors.border,
   },
   metricLabel: {
     fontSize: Typography.sizes.xxs,
     fontWeight: Typography.weights.semibold,
     color: Colors.textMuted,
-    marginBottom: 2,
+    marginBottom: 1,
     letterSpacing: 0.5,
   },
   metricValue: {
@@ -206,42 +200,19 @@ const styles = StyleSheet.create({
   warningValue: {
     color: Colors.warning,
   },
-  channelPreviewList: {
-    marginTop: Spacing.xs,
-    paddingTop: Spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  channelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 3,
-  },
-  channelName: {
-    fontSize: Typography.sizes.xxs,
-    color: Colors.textMuted,
-    flex: 1,
-  },
-  channelWatts: {
-    fontSize: Typography.sizes.xxs,
-    fontWeight: Typography.weights.semibold,
-    color: Colors.textMain,
-  },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Spacing.xs,
-    paddingTop: Spacing.xs,
+    marginTop: 6,
   },
   syncText: {
     fontSize: Typography.sizes.xxs,
     color: Colors.textSubtle,
   },
   detailsLink: {
-    fontSize: Typography.sizes.xs,
+    fontSize: Typography.sizes.xxs,
     fontWeight: Typography.weights.semibold,
     color: Colors.primary,
   },
 });
-
