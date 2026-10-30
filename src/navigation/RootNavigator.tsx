@@ -47,12 +47,12 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen
           name="Alerts"
           component={AlertsScreen}
-          options={{ title: 'AI Alerts & Interventions' }}
+          options={{ title: 'AI Alerts' }}
         />
         <Stack.Screen
           name="AlertDetails"
           component={AlertDetailsScreen}
-          options={({ route }) => ({ title: `Alert ${route.params.alertId}` })}
+          options={({ route }) => ({ title: route.params.alertTitle })}
         />
       </Stack.Navigator>
     </NavigationContainer>

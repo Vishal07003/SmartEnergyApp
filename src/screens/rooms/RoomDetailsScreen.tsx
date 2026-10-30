@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Switch,
   Alert,
   ActivityIndicator,
@@ -60,25 +59,17 @@ export const RoomDetailsScreen: React.FC<Props> = ({ route }) => {
         return d;
       })
     );
-
-    Alert.alert(
-      'Simulated Relay Control',
-      `[MOCK DEMO] Remote relay command queued for "${label}".\n\nHardware state will update when ESP32 confirms telemetry ACK.`
-    );
   };
 
   if (loading || !room) {
     return (
       <AppScreenContainer applyTopInset={false} applyBottomInset backgroundColor={Colors.background}>
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.loadingText}>Fetching Live Room Sensors...</Text>
+          <ActivityIndicator size="small" color={Colors.primary} />
         </View>
       </AppScreenContainer>
     );
   }
-
-  const isOccupied = room.occupancy.state === 'ACTIVE';
 
   return (
     <AppScreenContainer applyTopInset={false} applyBottomInset backgroundColor={Colors.background}>
@@ -87,64 +78,49 @@ export const RoomDetailsScreen: React.FC<Props> = ({ route }) => {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Room Header Card */}
+        {/* Header Card */}
         <Card style={styles.headerCard}>
           <View style={styles.headerRow}>
             <View style={styles.titleArea}>
               <Text style={styles.roomName}>{room.name}</Text>
               <Text style={styles.locationTag}>
-                {room.roomNumber} • {room.floor} • {room.building}
+                Room {room.roomNumber} • {room.floor}
               </Text>
             </View>
             <OccupancyBadge state={room.occupancy.state} />
           </View>
-
-          <View style={styles.confidenceRow}>
-            <View style={styles.liveDot} />
-            <Text style={styles.confidenceText}>
-              Multi-Sensor ML Fusion: {(room.occupancy.confidenceScore * 100).toFixed(0)}% Confidence
-            </Text>
-          </View>
         </Card>
 
-        {/* Live Multi-Sensor Readout Grid */}
-        <Text style={styles.sectionTitle}>Environmental & Occupancy Sensors</Text>
+        {/* Environmental Sensors */}
+        <Text style={styles.sectionTitle}>Environmental Sensors</Text>
         <View style={styles.sensorGrid}>
           <Card style={styles.sensorTile}>
-            <Text style={styles.tileLabel}>CLIMATE TEMPERATURE</Text>
+            <Text style={styles.tileLabel}>TEMPERATURE</Text>
             <Text style={styles.tileValue}>{room.sensors.temperature}°C</Text>
-            <Text style={styles.tileSub}>Nominal 21°C - 24°C</Text>
           </Card>
 
           <Card style={styles.sensorTile}>
-            <Text style={styles.tileLabel}>RELATIVE HUMIDITY</Text>
+            <Text style={styles.tileLabel}>HUMIDITY</Text>
             <Text style={styles.tileValue}>{room.sensors.humidity}%</Text>
-            <Text style={styles.tileSub}>Optimal Indoor Air</Text>
           </Card>
 
           <Card style={styles.sensorTile}>
-            <Text style={styles.tileLabel}>AMBIENT LUX</Text>
+            <Text style={styles.tileLabel}>ILLUMINANCE</Text>
             <Text style={styles.tileValue}>{room.sensors.ambientLight} Lux</Text>
-            <Text style={styles.tileSub}>
-              {room.sensors.ambientLight > 400 ? 'Daylight Available' : 'Perimeter Dimming'}
-            </Text>
           </Card>
 
           <Card style={styles.sensorTile}>
-            <Text style={styles.tileLabel}>ACOUSTIC / SOUND</Text>
+            <Text style={styles.tileLabel}>ACOUSTICS</Text>
             <Text style={styles.tileValue}>{room.sensors.soundLevel} dB</Text>
-            <Text style={styles.tileSub}>
-              {room.sensors.soundLevel > 50 ? 'Conversational Noise' : 'Quiet Environment'}
-            </Text>
           </Card>
         </View>
 
-        {/* Live Electrical & Load Metrics */}
-        <Text style={styles.sectionTitle}>Electrical & Sub-metering</Text>
+        {/* Electrical Metrics */}
+        <Text style={styles.sectionTitle}>Electrical Load</Text>
         <Card style={styles.electricalCard}>
           <View style={styles.powerMainRow}>
             <View>
-              <Text style={styles.powerMainLabel}>CURRENT LIVE LOAD</Text>
+              <Text style={styles.powerMainLabel}>LIVE POWER</Text>
               <Text style={styles.powerMainValue}>{room.electrical.livePowerWatts} W</Text>
             </View>
             <View style={styles.todayKwhBadge}>
@@ -174,65 +150,45 @@ export const RoomDetailsScreen: React.FC<Props> = ({ route }) => {
         </Card>
 
         {/* AI Recommendations */}
-        <Text style={styles.sectionTitle}>AI Energy Recommendations</Text>
-        {room.aiRecommendations.map((rec, idx) => (
-          <Card key={idx} style={styles.recCard}>
-            <View style={styles.recDot} />
-            <Text style={styles.recText}>{rec}</Text>
-          </Card>
-        ))}
+        {room.aiRecommendations.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Recommendations</Text>
+            {room.aiRecommendations.map((rec, idx) => (
+              <Card key={idx} style={styles.recCard}>
+                <View style={styles.recDot} />
+                <Text style={styles.recText}>{rec}</Text>
+              </Card>
+            ))}
+          </>
+        )}
 
-        {/* Connected ESP32 Hardware & Relays */}
-        <Text style={styles.sectionTitle}>
-          Connected IoT Controllers & Relays ({devices.length})
-        </Text>
+        {/* Connected Relays */}
+        <Text style={styles.sectionTitle}>Relay Controls</Text>
         {devices.map(device => (
           <Card key={device.id} style={styles.deviceCard}>
             <View style={styles.deviceHeader}>
-              <View>
-                <Text style={styles.deviceName}>{device.name}</Text>
-                <Text style={styles.deviceId}>
-                  {device.hardwareId} • RSSI: {device.telemetry.wifiRssi} dBm
-                </Text>
-              </View>
-              <View style={styles.onlineBadge}>
-                <Text style={styles.onlineText}>{device.status}</Text>
-              </View>
+              <Text style={styles.deviceName}>{device.name}</Text>
+              <Text style={styles.deviceStatusText}>{device.status}</Text>
             </View>
 
-            <View style={styles.channelSection}>
-              <Text style={styles.channelSectionTitle}>RELAY CHANNELS</Text>
-              {device.channels.map(ch => (
-                <View key={ch.channelId} style={styles.channelRow}>
-                  <View style={styles.channelInfo}>
-                    <Text style={styles.channelLabel}>{ch.label}</Text>
-                    <Text style={styles.channelWatts}>
-                      {ch.isOn ? `${ch.powerWatts} W • Active` : '0 W • Disconnected'}
-                      {ch.safetyLocked ? ' (Safety Locked)' : ''}
-                    </Text>
-                  </View>
-                  <Switch
-                    value={ch.isOn}
-                    disabled={ch.safetyLocked}
-                    onValueChange={() => handleToggleChannel(device.id, ch.channelId, ch.label)}
-                    trackColor={{ false: Colors.border, true: Colors.primaryLight }}
-                    thumbColor={ch.isOn ? Colors.primary : Colors.textSubtle}
-                  />
+            {device.channels.map(ch => (
+              <View key={ch.channelId} style={styles.channelRow}>
+                <View style={styles.channelInfo}>
+                  <Text style={styles.channelLabel}>{ch.label}</Text>
+                  <Text style={styles.channelWatts}>
+                    {ch.isOn ? `${ch.powerWatts} W` : 'OFF'}
+                    {ch.safetyLocked ? ' • Locked' : ''}
+                  </Text>
                 </View>
-              ))}
-            </View>
-          </Card>
-        ))}
-
-        {/* Recent Room Activities */}
-        <Text style={styles.sectionTitle}>Recent Activity Log</Text>
-        {room.recentActivities.map(activity => (
-          <Card key={activity.id} style={styles.activityCard}>
-            <View style={styles.activityHeader}>
-              <Text style={styles.activityTitle}>{activity.title}</Text>
-              <Text style={styles.activityTime}>{activity.timestamp}</Text>
-            </View>
-            <Text style={styles.activityDesc}>{activity.description}</Text>
+                <Switch
+                  value={ch.isOn}
+                  disabled={ch.safetyLocked}
+                  onValueChange={() => handleToggleChannel(device.id, ch.channelId, ch.label)}
+                  trackColor={{ false: Colors.border, true: Colors.primaryLight }}
+                  thumbColor={ch.isOn ? Colors.primary : Colors.textSubtle}
+                />
+              </View>
+            ))}
           </Card>
         ))}
       </ScrollView>
@@ -246,34 +202,27 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: Spacing.base,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: Spacing.xl,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Spacing.xl,
-  },
-  loadingText: {
-    marginTop: Spacing.md,
-    fontSize: Typography.sizes.sm,
-    color: Colors.textMuted,
   },
   headerCard: {
     padding: Spacing.base,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   titleArea: {
     flex: 1,
-    marginRight: Spacing.sm,
   },
   roomName: {
-    fontSize: Typography.sizes.lg,
+    fontSize: Typography.sizes.md,
     fontWeight: Typography.weights.bold,
     color: Colors.navyDark,
   },
@@ -282,30 +231,10 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginTop: 2,
   },
-  confidenceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: Spacing.sm,
-    paddingTop: Spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.primary,
-    marginRight: 6,
-  },
-  confidenceText: {
-    fontSize: Typography.sizes.xxs,
-    fontWeight: Typography.weights.semibold,
-    color: Colors.primaryDark,
-  },
   sectionTitle: {
-    fontSize: Typography.sizes.sm,
+    fontSize: Typography.sizes.xs,
     fontWeight: Typography.weights.bold,
-    color: Colors.navyDark,
+    color: Colors.textMuted,
     marginTop: Spacing.md,
     marginBottom: Spacing.xs,
     textTransform: 'uppercase',
@@ -315,7 +244,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: Spacing.xs,
   },
   sensorTile: {
     width: '48.5%',
@@ -330,18 +258,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   tileValue: {
-    fontSize: Typography.sizes.lg,
+    fontSize: Typography.sizes.md,
     fontWeight: Typography.weights.bold,
     color: Colors.textMain,
   },
-  tileSub: {
-    fontSize: Typography.sizes.xxs,
-    color: Colors.textSubtle,
-    marginTop: 2,
-  },
   electricalCard: {
     padding: Spacing.base,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   powerMainRow: {
     flexDirection: 'row',
@@ -363,19 +286,18 @@ const styles = StyleSheet.create({
   todayKwhBadge: {
     alignItems: 'flex-end',
     backgroundColor: Colors.surfaceSubtle,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.xs,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   todayKwhLabel: {
     fontSize: Typography.sizes.xxs,
     color: Colors.textMuted,
-    fontWeight: Typography.weights.bold,
   },
   todayKwhValue: {
-    fontSize: Typography.sizes.sm,
+    fontSize: Typography.sizes.xs,
     fontWeight: Typography.weights.bold,
     color: Colors.textMain,
   },
@@ -394,7 +316,6 @@ const styles = StyleSheet.create({
   subColLabel: {
     fontSize: Typography.sizes.xxs,
     color: Colors.textMuted,
-    fontWeight: Typography.weights.medium,
     marginBottom: 2,
   },
   subColValue: {
@@ -404,30 +325,30 @@ const styles = StyleSheet.create({
   },
   subDivider: {
     width: 1,
-    height: 24,
+    height: 20,
     backgroundColor: Colors.border,
   },
   recCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: Spacing.md,
+    padding: Spacing.sm,
     marginBottom: Spacing.xs,
-    backgroundColor: Colors.infoLight,
+    backgroundColor: Colors.surfaceSubtle,
     borderColor: Colors.border,
   },
   recDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     backgroundColor: Colors.primary,
-    marginTop: 6,
+    marginTop: 5,
     marginRight: Spacing.sm,
   },
   recText: {
     flex: 1,
     fontSize: Typography.sizes.xs,
-    color: Colors.navyDark,
-    lineHeight: 18,
+    color: Colors.textMain,
+    lineHeight: 16,
   },
   deviceCard: {
     padding: Spacing.base,
@@ -436,48 +357,26 @@ const styles = StyleSheet.create({
   deviceHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.sm,
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
   },
   deviceName: {
-    fontSize: Typography.sizes.sm,
+    fontSize: Typography.sizes.xs,
     fontWeight: Typography.weights.bold,
     color: Colors.textMain,
   },
-  deviceId: {
+  deviceStatusText: {
     fontSize: Typography.sizes.xxs,
-    color: Colors.textMuted,
-    marginTop: 2,
-  },
-  onlineBadge: {
-    backgroundColor: Colors.successLight,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: BorderRadius.xs,
-  },
-  onlineText: {
-    fontSize: Typography.sizes.xxs,
-    color: Colors.success,
+    color: Colors.primary,
     fontWeight: Typography.weights.bold,
-  },
-  channelSection: {
-    marginTop: Spacing.xs,
-    paddingTop: Spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  channelSectionTitle: {
-    fontSize: Typography.sizes.xxs,
-    fontWeight: Typography.weights.bold,
-    color: Colors.textMuted,
-    letterSpacing: 0.5,
-    marginBottom: Spacing.xs,
   },
   channelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.xs,
+    paddingVertical: 4,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
   },
   channelInfo: {
     flex: 1,
@@ -490,29 +389,5 @@ const styles = StyleSheet.create({
   channelWatts: {
     fontSize: Typography.sizes.xxs,
     color: Colors.textMuted,
-    marginTop: 1,
-  },
-  activityCard: {
-    padding: Spacing.md,
-    marginBottom: Spacing.xs,
-  },
-  activityHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 2,
-  },
-  activityTitle: {
-    fontSize: Typography.sizes.xs,
-    fontWeight: Typography.weights.bold,
-    color: Colors.textMain,
-  },
-  activityTime: {
-    fontSize: Typography.sizes.xxs,
-    color: Colors.textMuted,
-  },
-  activityDesc: {
-    fontSize: Typography.sizes.xxs,
-    color: Colors.textMuted,
-    marginTop: 2,
   },
 });

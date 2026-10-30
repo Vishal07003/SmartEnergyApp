@@ -1,7 +1,5 @@
 export * from './analyticsData';
-export * from './alertsData';
 
-import { mockDetailedAIAlerts } from './alertsData';
 import {
   StaffUser,
   Room,
@@ -429,7 +427,71 @@ export const mockDevices: IoTDevice[] = [
   },
 ];
 
-export const mockAIAlerts: AIAlert[] = [...mockDetailedAIAlerts];
+export const mockAIAlerts: AIAlert[] = [
+  {
+    id: 'alert_001',
+    title: 'Idle Fans Operating in Unoccupied Hall',
+    severity: 'WARNING',
+    category: 'UNOCCUPIED_WASTAGE',
+    roomId: 'room_lh_204',
+    roomName: 'Lecture Hall 204',
+    deviceId: 'dev_esp_03',
+    deviceName: 'ESP32 Smart Controller - LH 204',
+    timestamp: '13:42 Today',
+    description: 'Ceiling fans (480W total) operating while room has been vacant for >15 minutes.',
+    possibleReason: 'Students departed after class dismissal without powering off auxiliary switches.',
+    recommendedAction: 'Trigger automated fan relay cutoff or verify if the room is reserved for the next hour.',
+    isAcknowledged: false,
+    powerWastageEstimateWatts: 480,
+  },
+  {
+    id: 'alert_002',
+    title: 'High Idle Load in Computer Lab',
+    severity: 'INFO',
+    category: 'UNOCCUPIED_WASTAGE',
+    roomId: 'room_lab_101',
+    roomName: 'Advanced Computing Lab 1',
+    deviceId: 'dev_esp_01',
+    deviceName: 'ESP32 Node - Lab 101 Main Panel',
+    timestamp: '13:15 Today',
+    description: '4 idle workstations detected with display backlight active and low processor usage.',
+    possibleReason: 'Workstations left logged out without auto-suspend triggered.',
+    recommendedAction: 'Send network power-save trigger to idle terminals.',
+    isAcknowledged: false,
+    powerWastageEstimateWatts: 220,
+  },
+  {
+    id: 'alert_003',
+    title: 'Weak Wi-Fi RSSI Signal on Gateway',
+    severity: 'WARNING',
+    category: 'DEVICE_OFFLINE',
+    roomId: 'room_res_405',
+    roomName: 'IoT & Embedded Systems Lab',
+    deviceId: 'dev_esp_05',
+    deviceName: 'ESP32 Sensor Gateway - Lab 405',
+    timestamp: '12:50 Today',
+    description: 'Gateway RSSI dropped to -84 dBm, leading to occasional telemetry packet drops.',
+    possibleReason: 'Interference from 2.4 GHz bench equipment or distance to nearest AP.',
+    recommendedAction: 'Inspect physical AP antenna alignment or relocate node to secondary wall bracket.',
+    isAcknowledged: true,
+  },
+  {
+    id: 'alert_004',
+    title: 'High Daylighting Opportunity',
+    severity: 'INFO',
+    category: 'UNOCCUPIED_WASTAGE',
+    roomId: 'room_lab_101',
+    roomName: 'Advanced Computing Lab 1',
+    deviceId: 'dev_esp_02',
+    deviceName: 'ESP32 Environmental & Lighting Hub',
+    timestamp: '11:00 Today',
+    description: 'Window zone ambient brightness exceeded 450 Lux.',
+    possibleReason: 'Clear sky conditions during midday.',
+    recommendedAction: 'Dim perimeter lighting bank 1 by 30% to conserve ~150W.',
+    isAcknowledged: true,
+    powerWastageEstimateWatts: 150,
+  },
+];
 
 export const mockEnergyMetrics: SystemEnergyMetrics = {
   todayConsumptionKwh: 58.1,

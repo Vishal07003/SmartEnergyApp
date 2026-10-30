@@ -46,55 +46,36 @@ export const DeviceDetailsScreen: React.FC<Props> = ({ route }) => {
     const target = device.channels.find(c => c.channelId === channelId);
     if (target?.safetyLocked) {
       Alert.alert(
-        'Action Blocked by Safety Lock',
-        `Channel "${label}" is marked as critical infrastructure (e.g. servers or lab test benches) and cannot be switched off remotely.`
+        'Safety Locked',
+        `"${label}" is marked as critical infrastructure and cannot be switched off.`
       );
       return;
     }
 
-    Alert.alert(
-      'Confirm Channel Switch',
-      `[MOCK DEMO] Toggle power relay for "${label}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Toggle Relay',
-          onPress: () => {
-            setDevice(prev => {
-              if (!prev) return null;
-              return {
-                ...prev,
-                channels: prev.channels.map(ch => {
-                  if (ch.channelId === channelId) {
-                    return { ...ch, isOn: !ch.isOn };
-                  }
-                  return ch;
-                }),
-              };
-            });
-            Alert.alert(
-              'Relay Actuated (Demo)',
-              `Channel status confirmed by ESP32 hardware telemetry.`
-            );
-          },
-        },
-      ]
-    );
+    setDevice(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        channels: prev.channels.map(ch => {
+          if (ch.channelId === channelId) {
+            return { ...ch, isOn: !ch.isOn };
+          }
+          return ch;
+        }),
+      };
+    });
   };
 
   const handleRebootNode = () => {
     Alert.alert(
-      'Simulate Node Soft-Restart',
-      `[MOCK DEMO] Issue a soft restart command to ${device?.hardwareId}?\n\nTelemetry will reconnect within 15 seconds.`,
+      'Restart Node',
+      `[MOCK DEMO] Issue soft restart command to ${device?.hardwareId}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Send Restart Signal',
+          text: 'Restart',
           onPress: () => {
-            Alert.alert(
-              'Signal Sent (Demo)',
-              'ESP32 controller is restarting watchdog loops.'
-            );
+            Alert.alert('Sent', 'ESP32 controller is restarting watchdog loops.');
           },
         },
       ]
@@ -105,8 +86,7 @@ export const DeviceDetailsScreen: React.FC<Props> = ({ route }) => {
     return (
       <AppScreenContainer applyTopInset={false} applyBottomInset backgroundColor={Colors.background}>
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.loadingText}>Connecting to ESP32 Telemetry...</Text>
+          <ActivityIndicator size="small" color={Colors.primary} />
         </View>
       </AppScreenContainer>
     );
@@ -122,14 +102,12 @@ export const DeviceDetailsScreen: React.FC<Props> = ({ route }) => {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Top Header Card */}
+        {/* Header Card */}
         <Card style={styles.headerCard}>
           <View style={styles.headerRow}>
             <View style={styles.titleInfo}>
               <Text style={styles.deviceName}>{device.name}</Text>
-              <Text style={styles.deviceMeta}>
-                {device.hardwareId} • Firmware: {device.firmwareVersion}
-              </Text>
+              <Text style={styles.deviceMeta}>{device.hardwareId} • {device.roomName}</Text>
             </View>
             <View
               style={[
@@ -147,62 +125,42 @@ export const DeviceDetailsScreen: React.FC<Props> = ({ route }) => {
               </Text>
             </View>
           </View>
-
-          <View style={styles.metaRow}>
-            <Text style={styles.metaText}>MAC: {device.macAddress}</Text>
-            <Text style={styles.metaText}>IP: {device.ipAddress}</Text>
-            <Text style={styles.metaText}>Room: {device.roomName}</Text>
-          </View>
         </Card>
 
-        {/* Live Hardware Telemetry Grid */}
-        <Text style={styles.sectionTitle}>Live Sensor & Bus Telemetry</Text>
+        {/* Telemetry Grid */}
+        <Text style={styles.sectionTitle}>Telemetry</Text>
         <View style={styles.telemetryGrid}>
           <Card style={styles.telemetryTile}>
-            <Text style={styles.tileLabel}>LIVE POWER LOAD</Text>
+            <Text style={styles.tileLabel}>LIVE POWER</Text>
             <Text style={styles.tileValue}>{totalWatts} W</Text>
-            <Text style={styles.tileSub}>Active Channel Draw</Text>
           </Card>
 
           <Card style={styles.telemetryTile}>
-            <Text style={styles.tileLabel}>AC VOLTAGE</Text>
+            <Text style={styles.tileLabel}>VOLTAGE</Text>
             <Text style={styles.tileValue}>{device.telemetry.voltage} V</Text>
-            <Text style={styles.tileSub}>Frequency {device.telemetry.frequency} Hz</Text>
           </Card>
 
           <Card style={styles.telemetryTile}>
-            <Text style={styles.tileLabel}>AC CURRENT</Text>
+            <Text style={styles.tileLabel}>CURRENT</Text>
             <Text style={styles.tileValue}>{device.telemetry.current} A</Text>
-            <Text style={styles.tileSub}>PF: {device.telemetry.powerFactor}</Text>
           </Card>
 
           <Card style={styles.telemetryTile}>
-            <Text style={styles.tileLabel}>WI-FI SIGNAL (RSSI)</Text>
+            <Text style={styles.tileLabel}>WI-FI RSSI</Text>
             <Text style={styles.tileValue}>{device.telemetry.wifiRssi} dBm</Text>
-            <Text style={styles.tileSub}>
-              {device.telemetry.wifiRssi > -70 ? 'Strong Link' : 'Moderate/Weak'}
-            </Text>
           </Card>
         </View>
 
-        {/* Relay Channels & Mock Remote Actuation */}
-        <Text style={styles.sectionTitle}>
-          Individual Relay Channels ({device.channels.length})
-        </Text>
+        {/* Channels */}
+        <Text style={styles.sectionTitle}>Relay Channels</Text>
         <Card style={styles.channelsCard}>
           {device.channels.map(channel => (
             <View key={channel.channelId} style={styles.channelItem}>
               <View style={styles.channelTextCol}>
-                <View style={styles.labelRow}>
-                  <Text style={styles.channelLabel}>{channel.label}</Text>
-                  {channel.safetyLocked && (
-                    <View style={styles.lockedBadge}>
-                      <Text style={styles.lockedText}>Safety Locked</Text>
-                    </View>
-                  )}
-                </View>
+                <Text style={styles.channelLabel}>{channel.label}</Text>
                 <Text style={styles.channelSub}>
-                  Channel #{channel.channelId} • {channel.isOn ? `${channel.powerWatts} W Draw` : 'Cut Off (0 W)'}
+                  {channel.isOn ? `${channel.powerWatts} W` : 'OFF'}
+                  {channel.safetyLocked ? ' • Locked' : ''}
                 </Text>
               </View>
 
@@ -217,33 +175,26 @@ export const DeviceDetailsScreen: React.FC<Props> = ({ route }) => {
           ))}
         </Card>
 
-        {/* Automation Configuration for this Device */}
-        <Text style={styles.sectionTitle}>Automation & Policy State</Text>
+        {/* Automation State */}
+        <Text style={styles.sectionTitle}>Automation</Text>
         <Card style={styles.automationCard}>
           <View style={styles.automationRow}>
             <View style={styles.automationInfo}>
-              <Text style={styles.automationTitle}>Autonomous Energy Shedding</Text>
+              <Text style={styles.automationTitle}>Smart Shedding</Text>
               <Text style={styles.automationDesc}>
-                Allow institutional AI engine to de-energize active channels during room vacancy.
+                Auto-isolate idle loads when room is empty.
               </Text>
             </View>
             <Switch
               value={automationToggle}
-              onValueChange={val => {
-                setAutomationToggle(val);
-                Alert.alert(
-                  'Automation Rule Updated (Demo)',
-                  `Autonomous energy shedding is now ${val ? 'ENABLED' : 'PAUSED'} for this node.`
-                );
-              }}
+              onValueChange={setAutomationToggle}
               trackColor={{ false: Colors.border, true: Colors.primaryLight }}
               thumbColor={automationToggle ? Colors.primary : Colors.textSubtle}
             />
           </View>
         </Card>
 
-        {/* Node Maintenance Actions */}
-        <Text style={styles.sectionTitle}>Node Maintenance & Diagnostics</Text>
+        {/* Action Button */}
         <Button
           title="Restart ESP32 Controller"
           onPress={handleRebootNode}
@@ -261,35 +212,27 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: Spacing.base,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: Spacing.xl,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Spacing.xl,
-  },
-  loadingText: {
-    marginTop: Spacing.md,
-    fontSize: Typography.sizes.sm,
-    color: Colors.textMuted,
   },
   headerCard: {
     padding: Spacing.base,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.xs,
+    alignItems: 'center',
   },
   titleInfo: {
     flex: 1,
-    marginRight: Spacing.sm,
   },
   deviceName: {
-    fontSize: Typography.sizes.lg,
+    fontSize: Typography.sizes.md,
     fontWeight: Typography.weights.bold,
     color: Colors.navyDark,
   },
@@ -299,8 +242,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: BorderRadius.xs,
   },
   statusOnline: {
@@ -319,24 +262,10 @@ const styles = StyleSheet.create({
   textWarning: {
     color: Colors.warning,
   },
-  metaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: Spacing.sm,
-    paddingTop: Spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  metaText: {
-    fontSize: Typography.sizes.xxs,
-    color: Colors.textMuted,
-    marginRight: Spacing.md,
-    marginTop: 2,
-  },
   sectionTitle: {
-    fontSize: Typography.sizes.sm,
+    fontSize: Typography.sizes.xs,
     fontWeight: Typography.weights.bold,
-    color: Colors.navyDark,
+    color: Colors.textMuted,
     marginTop: Spacing.md,
     marginBottom: Spacing.xs,
     textTransform: 'uppercase',
@@ -346,7 +275,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: Spacing.xs,
   },
   telemetryTile: {
     width: '48.5%',
@@ -361,61 +289,38 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   tileValue: {
-    fontSize: Typography.sizes.lg,
+    fontSize: Typography.sizes.md,
     fontWeight: Typography.weights.bold,
     color: Colors.textMain,
   },
-  tileSub: {
-    fontSize: Typography.sizes.xxs,
-    color: Colors.textSubtle,
-    marginTop: 2,
-  },
   channelsCard: {
     padding: Spacing.base,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   channelItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.xs,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
   },
   channelTextCol: {
     flex: 1,
-    marginRight: Spacing.sm,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   channelLabel: {
-    fontSize: Typography.sizes.sm,
+    fontSize: Typography.sizes.xs,
     fontWeight: Typography.weights.medium,
     color: Colors.textMain,
-  },
-  lockedBadge: {
-    backgroundColor: Colors.surfaceSubtle,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: BorderRadius.xs,
-    marginLeft: Spacing.xs,
-  },
-  lockedText: {
-    fontSize: Typography.sizes.xxs,
-    color: Colors.textMuted,
   },
   channelSub: {
     fontSize: Typography.sizes.xxs,
     color: Colors.textMuted,
-    marginTop: 2,
+    marginTop: 1,
   },
   automationCard: {
     padding: Spacing.base,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   automationRow: {
     flexDirection: 'row',
@@ -427,7 +332,7 @@ const styles = StyleSheet.create({
     marginRight: Spacing.md,
   },
   automationTitle: {
-    fontSize: Typography.sizes.sm,
+    fontSize: Typography.sizes.xs,
     fontWeight: Typography.weights.bold,
     color: Colors.navyDark,
   },
@@ -435,12 +340,10 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.xxs,
     color: Colors.textMuted,
     marginTop: 2,
-    lineHeight: 16,
   },
   rebootBtn: {
-    height: 48,
+    height: 44,
     borderRadius: BorderRadius.md,
     marginTop: Spacing.xs,
   },
 });
-

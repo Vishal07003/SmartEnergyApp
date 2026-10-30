@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Cpu } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
 
 interface HardwareSensorSummaryBannerProps {
@@ -15,19 +16,14 @@ export const HardwareSensorSummaryBanner: React.FC<HardwareSensorSummaryBannerPr
     <View style={styles.container}>
       <View style={styles.topRow}>
         <View style={styles.hardwareBadge}>
-          <View style={styles.livePulse} />
-          <Text style={styles.hardwareTitle}>ESP32 Multi-Sensor Array</Text>
+          <Cpu size={14} color="#34D399" />
+          <Text style={styles.hardwareTitle}>ESP32 Sensor Array</Text>
         </View>
-        <Text style={styles.confidenceScore}>{overallConfidence}% Confidence</Text>
+        <Text style={styles.confidenceScore}>{overallConfidence}% ML Confidence</Text>
       </View>
-      <Text style={styles.sensorDescription}>
-        PIR Motion • Lux Illuminance • Sound & Acoustics • Temp & Humidity • CT Clamp Current
+      <Text style={styles.statusText}>
+        {totalSensors} Nodes Online • PIR, Lux, Sound, Temp & CT Clamp Fusion
       </Text>
-      <View style={styles.bottomStatus}>
-        <Text style={styles.statusText}>
-          {totalSensors} Monitored Sensor Nodes Online • Multi-Sensor Fusion Active
-        </Text>
-      </View>
     </View>
   );
 };
@@ -36,30 +32,24 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.heroNavy,
     borderRadius: BorderRadius.card,
-    padding: Spacing.base,
-    marginBottom: Spacing.base,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: 4,
   },
   hardwareBadge: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  livePulse: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#34D399',
-    marginRight: 6,
-  },
   hardwareTitle: {
     fontSize: Typography.sizes.xs,
     fontWeight: Typography.weights.bold,
     color: Colors.textInverse,
+    marginLeft: 6,
     letterSpacing: 0.5,
   },
   confidenceScore: {
@@ -67,22 +57,8 @@ const styles = StyleSheet.create({
     fontWeight: Typography.weights.bold,
     color: '#34D399',
   },
-  sensorDescription: {
-    fontSize: Typography.sizes.xxs,
-    color: '#94A3B8',
-    lineHeight: 16,
-    marginVertical: 4,
-  },
-  bottomStatus: {
-    marginTop: Spacing.xs,
-    paddingTop: Spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
-  },
   statusText: {
     fontSize: Typography.sizes.xxs,
-    color: '#E2E8F0',
-    fontWeight: Typography.weights.medium,
+    color: '#94A3B8',
   },
 });
-

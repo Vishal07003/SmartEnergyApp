@@ -89,19 +89,19 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     );
 
     Alert.alert(
-      'Simulated Hardware Relay Trigger',
-      `[MOCK DEMO] Master power relay for room was switched ${newState ? 'ON' : 'OFF'}.\n\nNote: In production, commands are queued via MQTT to the assigned ESP32 node and confirmed only after hardware ACK.`
+      'Hardware Relay Trigger',
+      `[MOCK DEMO] Master power relay switched ${newState ? 'ON' : 'OFF'}.\n\nCommand dispatched via MQTT.`
     );
   };
 
   const handleTakeAction = (alert: AIAlert) => {
     Alert.alert(
-      'Simulated Automation Action',
-      `[MOCK DEMO] AI recommendation action triggered for ${alert.roomName}.\n\nSimulated action: ${alert.recommendedAction}\n\nActual ESP32 hardware remains unaffected.`,
+      'Automated Action',
+      `[MOCK DEMO] Execute: ${alert.recommendedAction}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Confirm Action',
+          text: 'Confirm',
           onPress: () => {
             mockApi.acknowledgeAlert(alert.id);
             setAlerts(prev => prev.filter(a => a.id !== alert.id));
@@ -113,17 +113,14 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleCampusEcoSweep = () => {
     Alert.alert(
-      'Campus Eco-Sweep Confirmation',
-      '[MOCK DEMO] Initiate automated scan of all vacant rooms across Academic Block 4 to isolate idle loads (lights, fans, idle workstations)?\n\nSafety Check: Critical servers and test racks will remain protected.',
+      'Campus Eco-Sweep',
+      '[MOCK DEMO] De-energize non-essential loads in all empty rooms?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Execute Eco-Sweep',
+          text: 'Execute',
           onPress: () => {
-            Alert.alert(
-              'Eco-Sweep Completed (Demo)',
-              'Simulated command dispatched. 3 idle rooms isolated. Estimated power reduction: 1,340 W.'
-            );
+            Alert.alert('Completed', '3 idle rooms isolated. Saved ~1,340 W.');
           },
         },
       ]
@@ -132,17 +129,14 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleOverrideTimers = () => {
     Alert.alert(
-      'Override Vacancy Timers',
-      '[MOCK DEMO] Suspend automated idle-transition cutoffs across classrooms for next 60 minutes for campus events?',
+      'Override Timers',
+      '[MOCK DEMO] Pause vacancy timers for the next 60 minutes?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Enable 60m Override',
+          text: 'Override',
           onPress: () => {
-            Alert.alert(
-              'Automation Overridden (Demo)',
-              'Vacancy auto-shutdown timers paused until 16:00.'
-            );
+            Alert.alert('Enabled', 'Timers paused for 60m.');
           },
         },
       ]
@@ -152,7 +146,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   if (loading || !user || !metrics) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Synchronizing ESP32 Gateway Telemetry...</Text>
+        <Text style={styles.loadingText}>Synchronizing Gateway Telemetry...</Text>
       </View>
     );
   }
@@ -174,19 +168,19 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
           />
         }
       >
-        {/* 1. Header with Greeting, ESP32 Gateway Pill & Notification Bell */}
+        {/* 1. Header */}
         <DashboardHeader
           staffName={user.name}
           department={user.department}
           assignedBlock={user.assignedBlock}
-          gatewayStatus="ESP32 Gateway Node #04 – Synced 12s ago"
+          gatewayStatus="Node #04 • Synced"
           alertCount={unackAlerts.length}
           onPressAlerts={() => navigation.navigate('Alerts')}
           onPressProfile={() => navigation.navigate('MainApp', { screen: 'ProfileTab' })}
         />
 
         <View style={styles.innerContent}>
-          {/* 2. Hero Dark Navy Consumption Card */}
+          {/* 2. Hero Consumption Card */}
           <HeroConsumptionCard
             consumptionKwh={metrics.todayConsumptionKwh}
             liveWatts={metrics.liveSystemPowerWatts}
@@ -194,7 +188,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
             targetBudgetKwh={180}
           />
 
-          {/* 3. 4-Tile Quick Metric Grid */}
+          {/* 3. Metric Grid */}
           <MetricGrid
             activeRooms={metrics.totalActiveRooms}
             totalRooms={metrics.totalActiveRooms + metrics.totalEmptyRooms}
@@ -204,38 +198,36 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
             activeAnomalies={unackAlerts.length}
           />
 
-          {/* 4. Automated AI Interventions Section */}
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.sectionTitle}>Automated AI Interventions</Text>
-              <Text style={styles.sectionSubtitle}>Real-time heuristic & ML detections</Text>
-            </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Alerts')}>
-              <Text style={styles.viewAllText}>View All ({alerts.length})</Text>
-            </TouchableOpacity>
-          </View>
+          {/* 4. Automated AI Interventions */}
+          {unackAlerts.length > 0 && (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>AI Interventions</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Alerts')}>
+                  <Text style={styles.viewAllText}>View All ({alerts.length})</Text>
+                </TouchableOpacity>
+              </View>
 
-          {unackAlerts.slice(0, 2).map(alert => (
-            <AIInterventionCard
-              key={alert.id}
-              alert={alert}
-              onTakeAction={handleTakeAction}
-            />
-          ))}
+              {unackAlerts.slice(0, 2).map(alert => (
+                <AIInterventionCard
+                  key={alert.id}
+                  alert={alert}
+                  onTakeAction={handleTakeAction}
+                />
+              ))}
+            </>
+          )}
 
-          {/* 5. Campus Hourly Energy Consumption Profile (Bar Chart) */}
+          {/* 5. Campus Hourly Load Chart */}
           <EnergyBarChart
             data={metrics.hourlyTrends}
-            peakHourLabel="Peak at 11:00"
+            peakHourLabel="Peak: 11:00"
             style={styles.chartSpacing}
           />
 
-          {/* 6. Rooms Overview Section */}
+          {/* 6. Rooms Overview */}
           <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.sectionTitle}>Rooms Overview</Text>
-              <Text style={styles.sectionSubtitle}>Classrooms & Labs live occupancy</Text>
-            </View>
+            <Text style={styles.sectionTitle}>Rooms Overview</Text>
             <TouchableOpacity onPress={() => navigation.navigate('MainApp', { screen: 'RoomsTab' })}>
               <Text style={styles.viewAllText}>View All ({rooms.length}) ›</Text>
             </TouchableOpacity>
@@ -250,7 +242,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
             />
           ))}
 
-          {/* 7. Institutional Actions Toolbar */}
+          {/* 7. Action Bar */}
           <View style={styles.actionsBar}>
             <Button
               title="Campus Eco-Sweep"
@@ -272,15 +264,11 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
   container: {
     flex: 1,
   },
   contentContainer: {
-    paddingBottom: Spacing.xxl,
+    paddingBottom: Spacing.xl,
   },
   innerContent: {
     paddingHorizontal: Spacing.base,
@@ -295,24 +283,20 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: Typography.sizes.sm,
     color: Colors.textMuted,
-    fontWeight: Typography.weights.medium,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     marginTop: Spacing.md,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   sectionTitle: {
-    fontSize: Typography.sizes.md,
+    fontSize: Typography.sizes.sm,
     fontWeight: Typography.weights.bold,
     color: Colors.navyDark,
-  },
-  sectionSubtitle: {
-    fontSize: Typography.sizes.xxs,
-    color: Colors.textMuted,
-    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   viewAllText: {
     fontSize: Typography.sizes.xs,
@@ -320,7 +304,7 @@ const styles = StyleSheet.create({
     fontWeight: Typography.weights.semibold,
   },
   chartSpacing: {
-    marginVertical: Spacing.md,
+    marginVertical: Spacing.sm,
   },
   actionsBar: {
     flexDirection: 'row',
@@ -331,12 +315,12 @@ const styles = StyleSheet.create({
   sweepBtn: {
     flex: 1.2,
     marginRight: Spacing.sm,
-    height: 48,
+    height: 44,
     borderRadius: BorderRadius.md,
   },
   overrideBtn: {
     flex: 1,
-    height: 48,
+    height: 44,
     borderRadius: BorderRadius.md,
   },
 });

@@ -56,7 +56,6 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
     loadDevices();
   };
 
-  // Category filter tabs based on reference design: All, Labs, Lights, Fans & HVAC
   const categoryFilters = ['All', 'Labs', 'Lights', 'Fans & HVAC'];
 
   const filteredDevices = useMemo(() => {
@@ -89,37 +88,21 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleToggleMaster = (device: IoTDevice, newState: boolean) => {
-    Alert.alert(
-      'Hardware Controller Switch',
-      `[MOCK DEMO] Turn ${newState ? 'ON' : 'OFF'} all controllable channels on "${device.name}"?\n\nSafety check: Any channels designated as safety-locked will remain unaffected.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Confirm Toggle',
-          onPress: () => {
-            setDevices(prev =>
-              prev.map(d => {
-                if (d.id === device.id) {
-                  return {
-                    ...d,
-                    channels: d.channels.map(ch => {
-                      if (!ch.safetyLocked) {
-                        return { ...ch, isOn: newState };
-                      }
-                      return ch;
-                    }),
-                  };
-                }
-                return d;
-              })
-            );
-            Alert.alert(
-              'Relay State Updated (Demo)',
-              `Command sent to hardware ID ${device.hardwareId}. Active loads adjusted.`
-            );
-          },
-        },
-      ]
+    setDevices(prev =>
+      prev.map(d => {
+        if (d.id === device.id) {
+          return {
+            ...d,
+            channels: d.channels.map(ch => {
+              if (!ch.safetyLocked) {
+                return { ...ch, isOn: newState };
+              }
+              return ch;
+            }),
+          };
+        }
+        return d;
+      })
     );
   };
 
@@ -150,16 +133,13 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
         {/* Title Header */}
         <View style={styles.header}>
           <Text style={styles.screenTitle}>Device Management</Text>
-          <Text style={styles.screenSubtitle}>
-            186 Connected Electrical Appliances • 22 Nodes Monitored
-          </Text>
         </View>
 
-        {/* Search Input Bar */}
+        {/* Search Bar */}
         <View style={styles.searchBar}>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search appliance, node ID, or room..."
+            placeholder="Search device or room..."
             placeholderTextColor={Colors.textSubtle}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -167,7 +147,7 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
           />
         </View>
 
-        {/* Category Horizontal Filter Tabs */}
+        {/* Filter Tabs */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -198,7 +178,7 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
           })}
         </ScrollView>
 
-        {/* Campus Live Power & Node Counter Summary */}
+        {/* Campus Load Summary */}
         <DeviceCampusLoadBanner
           liveWatts={totalLiveWatts}
           totalDevices={devices.length}
@@ -209,18 +189,16 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
 
         {/* Device Cards Section */}
         <View style={styles.countRow}>
-          <Text style={styles.countText}>
-            Showing {filteredDevices.length} Connected Controllers
-          </Text>
+          <Text style={styles.countText}>{filteredDevices.length} Controllers</Text>
         </View>
 
         {loading ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Loading device controllers...</Text>
+            <Text style={styles.emptyText}>Loading...</Text>
           </View>
         ) : filteredDevices.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No devices match your search or filter.</Text>
+            <Text style={styles.emptyText}>No devices found.</Text>
           </View>
         ) : (
           filteredDevices.map(device => (
@@ -246,40 +224,35 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: Spacing.base,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: Spacing.xl,
   },
   header: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   screenTitle: {
     fontSize: Typography.sizes.xl,
     fontWeight: Typography.weights.bold,
     color: Colors.navyDark,
   },
-  screenSubtitle: {
-    fontSize: Typography.sizes.xs,
-    color: Colors.textMuted,
-    marginTop: 2,
-  },
   searchBar: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   searchInput: {
-    height: 46,
+    height: 42,
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
     paddingHorizontal: Spacing.md,
-    fontSize: Typography.sizes.base,
+    fontSize: Typography.sizes.sm,
     color: Colors.textMain,
   },
   filterPillContainer: {
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
   filterPill: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: 7,
+    paddingVertical: 5,
     borderRadius: BorderRadius.full,
     marginRight: Spacing.xs,
     borderWidth: 1,
@@ -303,18 +276,15 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
   },
   countRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   countText: {
     fontSize: Typography.sizes.xs,
-    fontWeight: Typography.weights.semibold,
+    fontWeight: Typography.weights.bold,
     color: Colors.textMain,
   },
   emptyContainer: {
-    paddingVertical: Spacing.xxl,
+    paddingVertical: Spacing.xl,
     alignItems: 'center',
   },
   emptyText: {

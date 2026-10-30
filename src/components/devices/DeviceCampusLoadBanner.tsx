@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Zap } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
 
 interface DeviceCampusLoadBannerProps {
@@ -19,23 +20,24 @@ export const DeviceCampusLoadBanner: React.FC<DeviceCampusLoadBannerProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      {/* Top Row: Campus Active Watts & Smart Shedding Badge */}
+      {/* Top Row */}
       <View style={styles.topRow}>
         <View>
-          <Text style={styles.label}>ACTIVE CAMPUS LOAD</Text>
+          <Text style={styles.label}>CAMPUS DEMAND</Text>
           <View style={styles.powerRow}>
-            <Text style={styles.powerValue}>⚡ {liveWatts.toLocaleString()}</Text>
+            <Zap size={18} color="#34D399" />
+            <Text style={styles.powerValue}>{liveWatts.toLocaleString()}</Text>
             <Text style={styles.powerUnit}>W</Text>
           </View>
         </View>
 
         <View style={styles.sheddingBadge}>
           <View style={styles.livePulse} />
-          <Text style={styles.sheddingText}>Smart Pulse Shedding Active</Text>
+          <Text style={styles.sheddingText}>Pulse Active</Text>
         </View>
       </View>
 
-      {/* Bottom Counter Strip */}
+      {/* Counter Strip */}
       <View style={styles.counterRow}>
         <View style={styles.counterItem}>
           <Text style={styles.counterLabel}>ONLINE</Text>
@@ -59,7 +61,7 @@ export const DeviceCampusLoadBanner: React.FC<DeviceCampusLoadBannerProps> = ({
         <View style={styles.divider} />
 
         <View style={styles.counterItem}>
-          <Text style={styles.counterLabel}>TOTAL NODES</Text>
+          <Text style={styles.counterLabel}>NODES</Text>
           <Text style={styles.counterValue}>{totalDevices}</Text>
         </View>
       </View>
@@ -72,51 +74,50 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.heroNavy,
     borderRadius: BorderRadius.card,
     padding: Spacing.base,
-    marginBottom: Spacing.base,
+    marginBottom: Spacing.md,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   label: {
     fontSize: Typography.sizes.xxs,
     fontWeight: Typography.weights.bold,
     color: '#94A3B8',
     letterSpacing: 0.8,
-    marginBottom: 2,
   },
   powerRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
+    marginTop: 2,
   },
   powerValue: {
-    fontSize: Typography.sizes.xxl,
+    fontSize: Typography.sizes.xl,
     fontWeight: Typography.weights.bold,
     color: '#34D399',
+    marginLeft: 3,
   },
   powerUnit: {
-    fontSize: Typography.sizes.sm,
+    fontSize: Typography.sizes.xs,
     color: '#94A3B8',
-    marginLeft: 4,
+    marginLeft: 3,
   },
   sheddingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(16, 185, 129, 0.15)',
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 5,
+    paddingVertical: 3,
     borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.3)',
   },
   livePulse: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     backgroundColor: '#34D399',
-    marginRight: 6,
+    marginRight: 5,
   },
   sheddingText: {
     fontSize: Typography.sizes.xxs,
@@ -128,9 +129,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: 'rgba(10, 23, 38, 0.7)',
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
   },
   counterItem: {
     alignItems: 'center',
@@ -140,13 +141,13 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.xxs,
     color: '#94A3B8',
     fontWeight: Typography.weights.semibold,
-    marginBottom: 2,
     letterSpacing: 0.5,
   },
   counterValue: {
-    fontSize: Typography.sizes.sm,
+    fontSize: Typography.sizes.xs,
     fontWeight: Typography.weights.bold,
     color: Colors.textInverse,
+    marginTop: 1,
   },
   onlineText: {
     color: '#34D399',
@@ -159,8 +160,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     width: 1,
-    height: 20,
+    height: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
 });
-

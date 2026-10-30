@@ -8,7 +8,6 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { FileText, Download } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
 import { AppScreenContainer, Button } from '../../components/common';
 import {
@@ -49,17 +48,14 @@ export const AnalyticsScreen: React.FC = () => {
 
   const handleExportReport = (format: 'PDF' | 'CSV') => {
     Alert.alert(
-      `Download Audit Report (${format})`,
-      `[MOCK DEMO] Compiling institutional energy audit data for period "${analyticsData?.dateRangeLabel}".\n\nFormat: ${format}\nStandards: ISO 50001 Certified Format\n\nNote: In production with FastAPI backend, this streams a digitally-signed compliance report.`,
+      `Download Audit (${format})`,
+      `[MOCK DEMO] Exporting energy report for ${analyticsData?.dateRangeLabel}.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: `Download ${format}`,
+          text: `Download`,
           onPress: () => {
-            Alert.alert(
-              'Report Ready (Demo)',
-              `Simulated energy_audit_${selectedHorizon.toLowerCase()}_2026.${format.toLowerCase()} saved to device cache.`
-            );
+            Alert.alert('Completed', `Audit report saved as ${format}.`);
           },
         },
       ]
@@ -83,15 +79,12 @@ export const AnalyticsScreen: React.FC = () => {
           />
         }
       >
-        {/* Analytics Top Header */}
+        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.screenTitle}>Energy Analytics</Text>
-          <Text style={styles.screenSubtitle}>
-            Campus Net-Zero & Telemetry Analytics • Academic Block 4
-          </Text>
         </View>
 
-        {/* Time Horizon Selector: Day, Week, Month, Year */}
+        {/* Time Horizon Selector */}
         <View style={styles.horizonSelector}>
           {horizons.map(h => {
             const isSelected = selectedHorizon === h;
@@ -118,7 +111,7 @@ export const AnalyticsScreen: React.FC = () => {
           })}
         </View>
 
-        {/* Date Range Subtext Indicator */}
+        {/* Date Range Subtext */}
         {analyticsData && (
           <View style={styles.dateRangeBadge}>
             <Text style={styles.dateRangeText}>{analyticsData.dateRangeLabel}</Text>
@@ -127,7 +120,7 @@ export const AnalyticsScreen: React.FC = () => {
 
         {loading || !analyticsData ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Loading energy analytics telemetry...</Text>
+            <Text style={styles.emptyText}>Loading...</Text>
           </View>
         ) : (
           <>
@@ -160,13 +153,13 @@ export const AnalyticsScreen: React.FC = () => {
             {/* 5. Report Export Actions */}
             <View style={styles.exportSection}>
               <Button
-                title="Download Comprehensive Audit (PDF)"
+                title="Download Audit (PDF)"
                 onPress={() => handleExportReport('PDF')}
                 variant="primary"
                 style={styles.exportBtn}
               />
               <Button
-                title="Export Raw Telemetry (CSV)"
+                title="Export Data (CSV)"
                 onPress={() => handleExportReport('CSV')}
                 variant="outline"
                 style={styles.exportBtnOutline}
@@ -185,20 +178,15 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: Spacing.base,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: Spacing.xl,
   },
   header: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   screenTitle: {
     fontSize: Typography.sizes.xl,
     fontWeight: Typography.weights.bold,
     color: Colors.navyDark,
-  },
-  screenSubtitle: {
-    fontSize: Typography.sizes.xs,
-    color: Colors.textMuted,
-    marginTop: 2,
   },
   horizonSelector: {
     flexDirection: 'row',
@@ -211,7 +199,7 @@ const styles = StyleSheet.create({
   },
   horizonTab: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 6,
     alignItems: 'center',
     borderRadius: BorderRadius.sm,
   },
@@ -234,8 +222,6 @@ const styles = StyleSheet.create({
   dateRangeBadge: {
     alignSelf: 'center',
     marginVertical: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
   },
   dateRangeText: {
     fontSize: Typography.sizes.xxs,
@@ -244,7 +230,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   emptyContainer: {
-    paddingVertical: Spacing.xxl,
+    paddingVertical: Spacing.xl,
     alignItems: 'center',
   },
   emptyText: {
@@ -256,12 +242,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.base,
   },
   exportBtn: {
-    height: 48,
+    height: 44,
     borderRadius: BorderRadius.md,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   exportBtnOutline: {
-    height: 48,
+    height: 44,
     borderRadius: BorderRadius.md,
   },
 });

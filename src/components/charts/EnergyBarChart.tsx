@@ -11,7 +11,7 @@ interface EnergyBarChartProps {
 
 export const EnergyBarChart: React.FC<EnergyBarChartProps> = ({
   data,
-  peakHourLabel = 'Peak at 11:00',
+  peakHourLabel = 'Peak: 11:00',
   style,
 }) => {
   const maxKwh = Math.max(...data.map(d => d.consumptionKwh), 8);
@@ -20,10 +20,7 @@ export const EnergyBarChart: React.FC<EnergyBarChartProps> = ({
     <View style={[styles.container, style]}>
       {/* Header Info */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Campus Hourly Profile</Text>
-          <Text style={styles.subtitle}>Operating Window: 08:00 – 18:00</Text>
-        </View>
+        <Text style={styles.title}>Campus Hourly Load</Text>
         <View style={styles.peakBadge}>
           <View style={styles.peakDot} />
           <Text style={styles.peakText}>{peakHourLabel}</Text>
@@ -67,36 +64,31 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.base,
+    alignItems: 'center',
+    marginBottom: Spacing.md,
   },
   title: {
-    fontSize: Typography.sizes.base,
+    fontSize: Typography.sizes.sm,
     fontWeight: Typography.weights.bold,
     color: Colors.textMain,
-  },
-  subtitle: {
-    fontSize: Typography.sizes.xs,
-    color: Colors.textMuted,
-    marginTop: Spacing.xxs,
   },
   peakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.primaryLight,
     paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    paddingVertical: 3,
     borderRadius: BorderRadius.full,
   },
   peakDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     backgroundColor: Colors.primary,
-    marginRight: 6,
+    marginRight: 5,
   },
   peakText: {
-    fontSize: Typography.sizes.xs,
+    fontSize: Typography.sizes.xxs,
     fontWeight: Typography.weights.semibold,
     color: Colors.primaryDark,
   },
@@ -104,8 +96,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    height: 120,
-    paddingTop: Spacing.sm,
+    height: 100,
   },
   barColumn: {
     flex: 1,
@@ -114,16 +105,16 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   barTrack: {
-    width: 14,
-    height: 95,
+    width: 12,
+    height: 80,
     backgroundColor: Colors.surfaceSubtle,
-    borderRadius: 7,
+    borderRadius: 6,
     justifyContent: 'flex-end',
     overflow: 'hidden',
   },
   barFill: {
     width: '100%',
-    borderRadius: 7,
+    borderRadius: 6,
   },
   normalBar: {
     backgroundColor: Colors.borderDark,
@@ -143,4 +134,3 @@ const styles = StyleSheet.create({
     fontWeight: Typography.weights.bold,
   },
 });
-

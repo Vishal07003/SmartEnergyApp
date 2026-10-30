@@ -29,28 +29,19 @@ export const AIInterventionCard: React.FC<AIInterventionCardProps> = ({
         <Text style={styles.roomName}>{alert.roomName}</Text>
       </View>
 
-      {/* Title & Description */}
-      <Text style={styles.title}>{alert.title}</Text>
-      <Text style={styles.description} numberOfLines={2}>
-        {alert.description}
-      </Text>
+      {/* Title */}
+      <Text style={styles.title} numberOfLines={1}>{alert.title}</Text>
 
-      {/* Reason Pill & Action */}
+      {/* Impact & Quick Action Row */}
       <View style={styles.actionRow}>
-        {alert.powerWastageEstimateWatts ? (
-          <View style={styles.impactPill}>
-            <Text style={styles.impactText}>~{alert.powerWastageEstimateWatts}W Waste</Text>
-          </View>
-        ) : (
-          <View style={styles.impactPill}>
-            <Text style={styles.impactText}>PIR Confirms Vacancy</Text>
-          </View>
-        )}
+        <Text style={styles.impactText}>
+          {alert.powerWastageEstimateWatts ? `~${alert.powerWastageEstimateWatts} W Waste` : 'Zero Occupancy'}
+        </Text>
 
         <Button
-          title={isCritical ? 'Turn Off Appliances' : 'Inspect Sensor'}
+          title={isCritical ? 'Turn Off' : 'Inspect'}
           onPress={() => onTakeAction(alert)}
-          variant={isCritical ? 'secondary' : 'outline'}
+          variant={isCritical ? 'danger' : 'outline'}
           style={styles.actionBtn}
           textStyle={styles.actionBtnText}
         />
@@ -62,10 +53,10 @@ export const AIInterventionCard: React.FC<AIInterventionCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.card,
-    padding: Spacing.base,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
     borderWidth: 1.5,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   criticalBorder: {
     borderColor: '#FED7D7',
@@ -79,11 +70,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: 4,
   },
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: BorderRadius.xs,
   },
   criticalBadge: {
@@ -109,42 +100,28 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
   },
   title: {
-    fontSize: Typography.sizes.base,
+    fontSize: Typography.sizes.sm,
     fontWeight: Typography.weights.bold,
     color: Colors.textMain,
     marginBottom: Spacing.xs,
-  },
-  description: {
-    fontSize: Typography.sizes.xs,
-    color: Colors.textMuted,
-    lineHeight: 18,
-    marginBottom: Spacing.md,
   },
   actionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  impactPill: {
-    backgroundColor: Colors.surfaceSubtle,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.sm,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    marginTop: 2,
   },
   impactText: {
     fontSize: Typography.sizes.xs,
-    color: Colors.textMain,
+    color: Colors.textMuted,
     fontWeight: Typography.weights.medium,
   },
   actionBtn: {
-    height: 36,
+    height: 30,
     paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.xs,
   },
   actionBtnText: {
-    fontSize: Typography.sizes.xs,
+    fontSize: Typography.sizes.xxs,
   },
 });
-

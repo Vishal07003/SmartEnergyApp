@@ -52,13 +52,11 @@ export const RoomsScreen: React.FC<Props> = ({ navigation }) => {
     loadRooms();
   };
 
-  // Distinct floors for filtering
   const floorOptions = useMemo(() => {
     const floors = Array.from(new Set(rooms.map(r => r.floor)));
     return ['All', ...floors];
   }, [rooms]);
 
-  // Filtered rooms based on search text and selected floor
   const filteredRooms = useMemo(() => {
     return rooms.filter(room => {
       const matchesSearch =
@@ -80,11 +78,11 @@ export const RoomsScreen: React.FC<Props> = ({ navigation }) => {
   const handleAutoShutdown = (room: Room) => {
     Alert.alert(
       'Confirm Auto-Shutdown',
-      `[MOCK DEMO] Execute vacancy power-cut protocol for ${room.name}?\n\nThis will safely de-energize ${room.electrical.activeApplianceCount} active loads (fans/monitors) via the assigned ESP32 relay.`,
+      `[MOCK DEMO] Turn off ${room.electrical.activeApplianceCount} active loads in ${room.name}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Shutdown Now',
+          text: 'Shutdown',
           style: 'destructive',
           onPress: () => {
             setRooms(prev =>
@@ -107,10 +105,6 @@ export const RoomsScreen: React.FC<Props> = ({ navigation }) => {
                 return r;
               })
             );
-            Alert.alert(
-              'Automation Dispatched (Demo)',
-              `${room.name} transitioned to EMPTY. Estimated savings: ${room.electrical.livePowerWatts} W.`
-            );
           },
         },
       ]
@@ -121,22 +115,16 @@ export const RoomsScreen: React.FC<Props> = ({ navigation }) => {
     setRooms(prev =>
       prev.map(r => {
         if (r.id === roomId) {
-          const updatedWatts = newState ? 950 : 25;
           return {
             ...r,
             electrical: {
               ...r.electrical,
-              livePowerWatts: updatedWatts,
+              livePowerWatts: newState ? 850 : 25,
             },
           };
         }
         return r;
       })
-    );
-
-    Alert.alert(
-      'Simulated Relay Command',
-      `[MOCK DEMO] Master circuit switch turned ${newState ? 'ON' : 'OFF'}.\n\nCommand logged to institutional gateway mock telemetry.`
     );
   };
 
@@ -158,16 +146,13 @@ export const RoomsScreen: React.FC<Props> = ({ navigation }) => {
         {/* Header Title Section */}
         <View style={styles.header}>
           <Text style={styles.screenTitle}>Rooms Monitoring</Text>
-          <Text style={styles.screenSubtitle}>
-            Academic Block 4 • Engineering Complex • Live Telemetry
-          </Text>
         </View>
 
         {/* Search Input Bar */}
         <View style={styles.searchBar}>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search room name, lab, or number..."
+            placeholder="Search room or lab..."
             placeholderTextColor={Colors.textSubtle}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -206,30 +191,28 @@ export const RoomsScreen: React.FC<Props> = ({ navigation }) => {
           })}
         </ScrollView>
 
-        {/* ESP32 Multi-Sensor Hardware Status Banner */}
+        {/* Hardware Status Banner */}
         <HardwareSensorSummaryBanner
           totalSensors={rooms.length * 4}
           overallConfidence={96.2}
         />
 
-        {/* Status Counts Header */}
+        {/* List Header */}
         <View style={styles.countRow}>
-          <Text style={styles.countText}>
-            Showing {filteredRooms.length} of {rooms.length} Spaces
-          </Text>
+          <Text style={styles.countText}>{filteredRooms.length} Rooms</Text>
           <Text style={styles.activeRatio}>
-            {rooms.filter(r => r.occupancy.state === 'ACTIVE').length} In Session
+            {rooms.filter(r => r.occupancy.state === 'ACTIVE').length} Active
           </Text>
         </View>
 
         {/* List of Detailed Room Cards */}
         {loading ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Loading sensor telemetry...</Text>
+            <Text style={styles.emptyText}>Loading...</Text>
           </View>
         ) : filteredRooms.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No matching rooms or labs found.</Text>
+            <Text style={styles.emptyText}>No matching rooms found.</Text>
           </View>
         ) : (
           filteredRooms.map(room => (
@@ -253,40 +236,35 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: Spacing.base,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: Spacing.xl,
   },
   header: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   screenTitle: {
     fontSize: Typography.sizes.xl,
     fontWeight: Typography.weights.bold,
     color: Colors.navyDark,
   },
-  screenSubtitle: {
-    fontSize: Typography.sizes.xs,
-    color: Colors.textMuted,
-    marginTop: 2,
-  },
   searchBar: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   searchInput: {
-    height: 46,
+    height: 42,
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
     paddingHorizontal: Spacing.md,
-    fontSize: Typography.sizes.base,
+    fontSize: Typography.sizes.sm,
     color: Colors.textMain,
   },
   filterPillContainer: {
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
   filterPill: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: 7,
+    paddingVertical: 5,
     borderRadius: BorderRadius.full,
     marginRight: Spacing.xs,
     borderWidth: 1,
@@ -313,11 +291,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   countText: {
     fontSize: Typography.sizes.xs,
-    fontWeight: Typography.weights.semibold,
+    fontWeight: Typography.weights.bold,
     color: Colors.textMain,
   },
   activeRatio: {
@@ -326,7 +304,7 @@ const styles = StyleSheet.create({
     fontWeight: Typography.weights.semibold,
   },
   emptyContainer: {
-    paddingVertical: Spacing.xxl,
+    paddingVertical: Spacing.xl,
     alignItems: 'center',
   },
   emptyText: {

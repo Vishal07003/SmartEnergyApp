@@ -4,7 +4,7 @@ import { Colors, BorderRadius, Shadows, Spacing } from '../../constants/theme';
 
 interface CardProps {
   children: React.ReactNode;
-  style?: ViewStyle | ViewStyle[];
+  style?: ViewStyle | (ViewStyle | undefined | null | false)[];
   noPadding?: boolean;
 }
 
@@ -31,4 +31,3 @@ const styles = StyleSheet.create({
     padding: 0,
   },
 });
-

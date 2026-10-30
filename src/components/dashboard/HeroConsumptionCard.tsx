@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Zap } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
 
 interface HeroConsumptionCardProps {
@@ -19,18 +20,17 @@ export const HeroConsumptionCard: React.FC<HeroConsumptionCardProps> = ({
 
   return (
     <View style={styles.card}>
-      {/* Top Row: Label & Comparison Badge */}
+      {/* Top Row: Metric Label & Trend Badge */}
       <View style={styles.topRow}>
-        <Text style={styles.badgeLabel}>TODAY'S ELECTRICITY CONSUMPTION</Text>
+        <Text style={styles.badgeLabel}>TODAY'S CONSUMPTION</Text>
         <View style={[styles.trendBadge, isSaving ? styles.savingBadge : styles.spikeBadge]}>
           <Text style={[styles.trendText, isSaving ? styles.savingText : styles.spikeText]}>
-            {isSaving ? '▼ ' : '▲ '}
-            {Math.abs(vsYesterdayPercent)}% vs Yesterday
+            {isSaving ? '▼ ' : '▲ '}{Math.abs(vsYesterdayPercent)}% vs Yesterday
           </Text>
         </View>
       </View>
 
-      {/* Main Figures Row: Big kWh & Live Power Accent Tile */}
+      {/* Main Figures */}
       <View style={styles.metricsRow}>
         <View style={styles.kwhContainer}>
           <Text style={styles.kwhValue}>{consumptionKwh.toFixed(1)}</Text>
@@ -38,12 +38,15 @@ export const HeroConsumptionCard: React.FC<HeroConsumptionCardProps> = ({
         </View>
 
         <View style={styles.livePowerTile}>
-          <Text style={styles.livePowerLabel}>LIVE CAMPUS LOAD</Text>
-          <Text style={styles.livePowerValue}>⚡ +{liveWatts.toLocaleString()} W</Text>
+          <Text style={styles.livePowerLabel}>LIVE DEMAND</Text>
+          <View style={styles.livePowerValueRow}>
+            <Zap size={13} color="#34D399" />
+            <Text style={styles.livePowerValue}>+{liveWatts.toLocaleString()} W</Text>
+          </View>
         </View>
       </View>
 
-      {/* Budget & Target Progress Bar */}
+      {/* Target Progress Bar */}
       <View style={styles.progressContainer}>
         <View style={styles.progressTrack}>
           <View
@@ -54,18 +57,11 @@ export const HeroConsumptionCard: React.FC<HeroConsumptionCardProps> = ({
           />
         </View>
         <View style={styles.budgetRow}>
-          <Text style={styles.budgetText}>Target Budget: {targetBudgetKwh} kWh</Text>
+          <Text style={styles.budgetText}>Target: {targetBudgetKwh} kWh</Text>
           <Text style={styles.budgetText}>
-            {((consumptionKwh / targetBudgetKwh) * 100).toFixed(1)}% Used
+            {((consumptionKwh / targetBudgetKwh) * 100).toFixed(0)}% Used
           </Text>
         </View>
-      </View>
-
-      {/* Footer Status Pill */}
-      <View style={styles.footerStrip}>
-        <View style={styles.liveDot} />
-        <Text style={styles.footerText}>TELEMETRY ACTIVE • NORMAL PROFILE</Text>
-        <Text style={styles.footerRightText}>Load Coeff: 0.92</Text>
       </View>
     </View>
   );
@@ -76,7 +72,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.heroNavy,
     borderRadius: BorderRadius.card,
     padding: Spacing.base,
-    marginBottom: Spacing.base,
+    marginBottom: Spacing.md,
   },
   topRow: {
     flexDirection: 'row',
@@ -92,7 +88,7 @@ const styles = StyleSheet.create({
   },
   trendBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 2,
     borderRadius: BorderRadius.full,
   },
   savingBadge: {
@@ -137,7 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(23, 50, 77, 0.7)',
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.xs,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'flex-end',
@@ -149,13 +145,18 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 2,
   },
+  livePowerValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   livePowerValue: {
     fontSize: Typography.sizes.base,
     fontWeight: Typography.weights.bold,
     color: '#34D399',
+    marginLeft: 3,
   },
   progressContainer: {
-    marginTop: Spacing.sm,
+    marginTop: Spacing.xs,
   },
   progressTrack: {
     height: 4,
@@ -177,31 +178,4 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.xxs,
     color: '#94A3B8',
   },
-  footerStrip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(10, 23, 38, 0.7)',
-    marginTop: Spacing.md,
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: BorderRadius.xs,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#34D399',
-    marginRight: 6,
-  },
-  footerText: {
-    fontSize: Typography.sizes.xxs,
-    color: '#E2E8F0',
-    fontWeight: Typography.weights.semibold,
-    flex: 1,
-  },
-  footerRightText: {
-    fontSize: Typography.sizes.xxs,
-    color: '#94A3B8',
-  },
 });
-
