@@ -7,6 +7,7 @@ import { MainTabNavigator } from './MainTabNavigator';
 import { RoomDetailsScreen } from '../screens/rooms/RoomDetailsScreen';
 import { DeviceDetailsScreen } from '../screens/devices/DeviceDetailsScreen';
 import { AlertsScreen } from '../screens/alerts/AlertsScreen';
+import { AlertDetailsScreen } from '../screens/alerts/AlertDetailsScreen';
 import { Colors } from '../constants/theme';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -47,6 +48,11 @@ export const RootNavigator: React.FC = () => {
           name="Alerts"
           component={AlertsScreen}
           options={{ title: 'AI Alerts & Interventions' }}
+        />
+        <Stack.Screen
+          name="AlertDetails"
+          component={AlertDetailsScreen}
+          options={({ route }) => ({ title: `Alert ${route.params.alertId}` })}
         />
       </Stack.Navigator>
     </NavigationContainer>

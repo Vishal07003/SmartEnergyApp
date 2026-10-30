@@ -21,5 +21,5 @@ export type RootStackParamList = {
   RoomDetails: { roomId: string; roomName: string };
   DeviceDetails: { deviceId: string; deviceName: string };
   Alerts: undefined;
+  AlertDetails: { alertId: string; alertTitle: string };
 };
-

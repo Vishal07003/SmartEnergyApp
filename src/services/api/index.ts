@@ -10,13 +10,14 @@ import {
   mockRooms,
   mockDevices,
   mockAIAlerts,
+  mockDetailedAIAlerts,
   mockEnergyMetrics,
 } from '../mockData';
 
 class MockApiService {
   private rooms: Room[] = [...mockRooms];
   private devices: IoTDevice[] = [...mockDevices];
-  private alerts: AIAlert[] = [...mockAIAlerts];
+  private alerts: AIAlert[] = [...mockDetailedAIAlerts];
 
   async getStaffProfile(): Promise<StaffUser> {
     return { ...mockCurrentUser };
@@ -55,9 +56,26 @@ class MockApiService {
     const alert = this.alerts.find(a => a.id === alertId);
     if (alert) {
       alert.isAcknowledged = true;
+      if (alert.status === 'ACTIVE') {
+        alert.status = 'ACKNOWLEDGED';
+      }
       return true;
     }
     return false;
+  }
+
+  async resolveAlert(alertId: string): Promise<boolean> {
+    const alert = this.alerts.find(a => a.id === alertId);
+    if (alert) {
+      alert.status = 'RESOLVED';
+      alert.isAcknowledged = true;
+      return true;
+    }
+    return false;
+  }
+
+  async getAlertById(alertId: string): Promise<AIAlert | undefined> {
+    return this.alerts.find(a => a.id === alertId);
   }
 
   async toggleDeviceChannel(deviceId: string, channelId: number): Promise<IoTDevice> {
