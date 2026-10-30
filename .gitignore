@@ -73,3 +73,42 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Android generated build outputs
+android/app/build/
+android/build/
+android/.cxx/
+android/app/.cxx/
+
+# React Native generated files
+*.apk
+*.aab
+*.hprof
+*.log
+
+# IDE
+.vscode/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Python backend (future FastAPI)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Temporary files
+*.tmp
+*.bak
