@@ -14,12 +14,14 @@ import {
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Search, ChevronRight } from 'lucide-react-native';
+import { Search, ChevronRight, Plus } from 'lucide-react-native';
 import { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
 import { AppScreenContainer } from '../../components/common';
+import { AddDeviceModal } from '../../components/devices';
 import { mockApi } from '../../services/api';
-import { IoTDevice } from '../../types';
+import { IoTDevice, Room } from '../../types';
+import { useAuth } from '../../context/AuthContext';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'DevicesTab'>,
@@ -27,16 +29,23 @@ type Props = CompositeScreenProps<
 >;
 
 export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
+  const { user } = useAuth();
   const [devices, setDevices] = useState<IoTDevice[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedFilter, setSelectedFilter] = useState<'All' | 'Online' | 'Offline'>('All');
+  const [addModalVisible, setAddModalVisible] = useState<boolean>(false);
 
-  const loadDevices = async () => {
+  const loadData = async () => {
     try {
-      const data = await mockApi.getDevices();
-      setDevices(data);
+      const [deviceData, roomData] = await Promise.all([
+        mockApi.getDevices(),
+        mockApi.getRooms(),
+      ]);
+      setDevices(deviceData);
+      setRooms(roomData);
     } catch {
       // Resilient error handling
     } finally {
@@ -46,12 +55,12 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   useEffect(() => {
-    loadDevices();
+    loadData();
   }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadDevices();
+    loadData();
   };
 
   const filteredDevices = useMemo(() => {
@@ -104,8 +113,20 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Devices</Text>
-          <Text style={styles.countText}>{filteredDevices.length} devices</Text>
+          <View>
+            <Text style={styles.title}>Devices</Text>
+            <Text style={styles.countText}>{filteredDevices.length} devices</Text>
+          </View>
+          {user?.isAdmin && (
+            <TouchableOpacity
+              style={styles.addDeviceBtn}
+              onPress={() => setAddModalVisible(true)}
+              activeOpacity={0.8}
+            >
+              <Plus size={16} color={Colors.surface} />
+              <Text style={styles.addDeviceBtnText}>Add Device</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Search */}
@@ -218,6 +239,14 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
             </View>
           )}
         </ScrollView>
+
+        {/* Admin Register Device Modal */}
+        <AddDeviceModal
+          visible={addModalVisible}
+          onClose={() => setAddModalVisible(false)}
+          onSuccess={loadData}
+          rooms={rooms}
+        />
       </View>
     </AppScreenContainer>
   );
@@ -237,8 +266,22 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'baseline',
+    alignItems: 'center',
     marginBottom: Spacing.sm,
+  },
+  addDeviceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 14,
+    minHeight: 48,
+    borderRadius: BorderRadius.md,
+    gap: 6,
+  },
+  addDeviceBtnText: {
+    color: Colors.surface,
+    fontSize: Typography.sizes.sm,
+    fontWeight: Typography.weights.bold,
   },
   title: {
     fontSize: Typography.sizes.xl,
