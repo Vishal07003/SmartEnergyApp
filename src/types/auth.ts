@@ -1,4 +1,4 @@
-export type StaffRole = 'staff';
+export type StaffRole = 'staff' | 'admin' | 'ADMIN' | 'STAFF';
 
 export interface StaffUser {
   id: string;
@@ -8,6 +8,7 @@ export interface StaffUser {
   employeeId: string;
   department: string;
   role: StaffRole;
+  isAdmin?: boolean;
   avatarUrl?: string;
   assignedBlock: string;
   notificationsEnabled: boolean;
