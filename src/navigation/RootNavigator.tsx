@@ -1,4 +1,5 @@
 import React from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from './types';
@@ -9,14 +10,24 @@ import { DeviceDetailsScreen } from '../screens/devices/DeviceDetailsScreen';
 import { AlertsScreen } from '../screens/alerts/AlertsScreen';
 import { AlertDetailsScreen } from '../screens/alerts/AlertDetailsScreen';
 import { Colors } from '../constants/theme';
+import { useAuth } from '../context/AuthContext';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="MainApp"
         screenOptions={{
           headerStyle: { backgroundColor: Colors.surface },
           headerTintColor: Colors.navy,
@@ -24,37 +35,51 @@ export const RootNavigator: React.FC = () => {
           contentStyle: { backgroundColor: Colors.background },
         }}
       >
-        <Stack.Screen
-          name="Auth"
-          component={AuthNavigator}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="MainApp"
-          component={MainTabNavigator}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="RoomDetails"
-          component={RoomDetailsScreen}
-          options={({ route }) => ({ title: route.params.roomName })}
-        />
-        <Stack.Screen
-          name="DeviceDetails"
-          component={DeviceDetailsScreen}
-          options={({ route }) => ({ title: route.params.deviceName })}
-        />
-        <Stack.Screen
-          name="Alerts"
-          component={AlertsScreen}
-          options={{ title: 'Alerts' }}
-        />
-        <Stack.Screen
-          name="AlertDetails"
-          component={AlertDetailsScreen}
-          options={({ route }) => ({ title: route.params.alertTitle })}
-        />
+        {!isAuthenticated ? (
+          <Stack.Screen
+            name="Auth"
+            component={AuthNavigator}
+            options={{ headerShown: false }}
+          />
+        ) : (
+          <>
+            <Stack.Screen
+              name="MainApp"
+              component={MainTabNavigator}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="RoomDetails"
+              component={RoomDetailsScreen}
+              options={({ route }) => ({ title: route.params.roomName })}
+            />
+            <Stack.Screen
+              name="DeviceDetails"
+              component={DeviceDetailsScreen}
+              options={({ route }) => ({ title: route.params.deviceName })}
+            />
+            <Stack.Screen
+              name="Alerts"
+              component={AlertsScreen}
+              options={{ title: 'Alerts' }}
+            />
+            <Stack.Screen
+              name="AlertDetails"
+              component={AlertDetailsScreen}
+              options={({ route }) => ({ title: route.params.alertTitle })}
+            />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
