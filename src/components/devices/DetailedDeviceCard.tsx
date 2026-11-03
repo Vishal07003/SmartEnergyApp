@@ -69,13 +69,18 @@ export const DetailedDeviceCard: React.FC<DetailedDeviceCardProps> = ({
         </View>
 
         <View style={styles.switchCol}>
-          <Switch
-            value={hasActiveChannels}
-            disabled={!isOnline}
-            onValueChange={val => onToggleMaster(device, val)}
-            trackColor={{ false: Colors.border, true: Colors.primaryLight }}
-            thumbColor={hasActiveChannels ? Colors.primary : Colors.textSubtle}
-          />
+          {isOnline ? (
+            <Switch
+              value={hasActiveChannels}
+              onValueChange={val => onToggleMaster(device, val)}
+              trackColor={{ false: Colors.border, true: Colors.primaryLight }}
+              thumbColor={hasActiveChannels ? Colors.primary : Colors.textSubtle}
+            />
+          ) : (
+            <View style={styles.unavailableBadge}>
+              <Text style={styles.unavailableText}>OFFLINE</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -162,6 +167,20 @@ const styles = StyleSheet.create({
   },
   switchCol: {
     alignItems: 'flex-end',
+  },
+  unavailableBadge: {
+    backgroundColor: Colors.surfaceSubtle,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.xs,
+  },
+  unavailableText: {
+    fontSize: Typography.sizes.xxs,
+    fontWeight: Typography.weights.bold,
+    color: Colors.textMuted,
+    letterSpacing: 0.5,
   },
   metricsBar: {
     flexDirection: 'row',
