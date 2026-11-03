@@ -11,8 +11,7 @@ import {
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
 import { Button, AppScreenContainer } from '../../components/common';
 import { LoadDynamicsChart } from '../../components/analytics';
-import { mockAnalyticsData } from '../../services/mockData/analyticsData';
-import { mockApi } from '../../services/api';
+import { liveApi } from '../../services/api';
 import { TimeHorizon, PeriodAnalyticsData } from '../../types';
 
 export const AnalyticsScreen: React.FC = () => {
@@ -26,7 +25,7 @@ export const AnalyticsScreen: React.FC = () => {
     setLoading(true);
     setErrorMessage(null);
     try {
-      const data = await mockApi.getAnalyticsByHorizon(horizon);
+      const data = await liveApi.getAnalyticsByHorizon(horizon);
       if (data) {
         setAnalyticsData(data);
       } else {
