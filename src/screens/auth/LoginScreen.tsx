@@ -4,21 +4,30 @@ import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme
 import { Card, Button, Input, AppScreenContainer, AppKeyboardAwareView, Icon } from '../../components/common';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/types';
+import { useAuth } from '../../context/AuthContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export const LoginScreen: React.FC<Props> = ({ navigation }) => {
-  const [email, setEmail] = useState('evelyn.reed@institution.edu');
-  const [password, setPassword] = useState('••••••••••••');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    if (!username.trim() || !password.trim()) {
+      Alert.alert('Required Fields', 'Please enter your username and password.');
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
+    try {
+      await login(username.trim(), password);
+    } catch (err: any) {
+      Alert.alert('Authentication Failed', err.message || 'Invalid username or password.');
+    } finally {
       setLoading(false);
-      // Handled by root or demo transition
-      Alert.alert('Authenticated', 'Welcome back, Dr. Evelyn Reed.');
-    }, 600);
+    }
   };
 
   return (
@@ -36,12 +45,11 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.formTitle}>Staff Sign In</Text>
 
           <Input
-            label="Institutional Email"
-            value={email}
-            onChangeText={setEmail}
+            label="Username or Email"
+            value={username}
+            onChangeText={setUsername}
             autoCapitalize="none"
-            keyboardType="email-address"
-            placeholder="staff@institution.edu"
+            placeholder="e.g. admin or staff_id"
           />
 
           <Input
@@ -80,34 +88,35 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   scrollContent: {
-    justifyContent: 'center',
     padding: Spacing.lg,
-    minHeight: '100%',
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   headerArea: {
     alignItems: 'center',
     marginBottom: Spacing.xl,
   },
   brandIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.primaryLight,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   title: {
     fontSize: Typography.sizes.xl,
     fontWeight: Typography.weights.bold,
-    color: Colors.navyDark,
-    textAlign: 'center',
+    color: Colors.textMain,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: Typography.sizes.xs,
+    fontSize: Typography.sizes.sm,
     color: Colors.textMuted,
-    marginTop: Spacing.xs,
-    textAlign: 'center',
+    marginTop: 4,
   },
   card: {
     padding: Spacing.lg,
@@ -115,31 +124,32 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: Typography.sizes.md,
     fontWeight: Typography.weights.bold,
-    color: Colors.navyDark,
-    marginBottom: Spacing.base,
+    color: Colors.textMain,
+    marginBottom: Spacing.md,
   },
   forgotBtn: {
     alignSelf: 'flex-end',
-    marginBottom: Spacing.base,
     marginTop: -Spacing.xs,
+    marginBottom: Spacing.lg,
+    paddingVertical: 4,
   },
   forgotText: {
-    fontSize: Typography.sizes.xs,
+    fontSize: Typography.sizes.sm,
     color: Colors.primary,
-    fontWeight: Typography.weights.semibold,
+    fontWeight: '600',
   },
   submitBtn: {
-    height: 50,
+    marginTop: Spacing.xs,
   },
   footerNote: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Spacing.xl,
+    gap: 6,
   },
   footerText: {
-    fontSize: Typography.sizes.xxs,
+    fontSize: Typography.sizes.xs,
     color: Colors.textMuted,
-    marginLeft: Spacing.xs,
   },
 });
