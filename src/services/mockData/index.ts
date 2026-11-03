@@ -501,7 +501,7 @@ export const mockEnergyMetrics: SystemEnergyMetrics = {
   totalActiveRooms: 2,
   totalEmptyRooms: 2,
   totalConnectedDevices: 5,
-  onlineDevicesCount: 5,
+  onlineDevicesCount: 4,
   todayWastageKwh: 6.8,
   todaySavingsKwh: 14.2,
   co2OffsetKg: 9.94,
