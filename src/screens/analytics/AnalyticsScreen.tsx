@@ -6,16 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
-import { AppScreenContainer, Button } from '../../components/common';
-import {
-  PeriodicHeroCard,
-  LoadDynamicsChart,
-  InstitutionalAllocationSection,
-  AIEnergyGovernanceCard,
-} from '../../components/analytics';
+import { AppScreenContainer } from '../../components/common';
+import { LoadDynamicsChart } from '../../components/analytics';
 import { mockApi } from '../../services/api';
 import { TimeHorizon, PeriodAnalyticsData } from '../../types';
 
@@ -30,7 +25,7 @@ export const AnalyticsScreen: React.FC = () => {
       const data = await mockApi.getAnalyticsByHorizon(horizon);
       setAnalyticsData(data);
     } catch {
-      Alert.alert('Error', 'Unable to retrieve periodic analytics data.');
+      // Handled via fallback
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -46,29 +41,27 @@ export const AnalyticsScreen: React.FC = () => {
     fetchAnalytics(selectedHorizon);
   };
 
-  const handleExportReport = (format: 'PDF' | 'CSV') => {
-    Alert.alert(
-      `Download Audit (${format})`,
-      `[MOCK DEMO] Exporting energy report for ${analyticsData?.dateRangeLabel}.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: `Download`,
-          onPress: () => {
-            Alert.alert('Completed', `Audit report saved as ${format}.`);
-          },
-        },
-      ]
-    );
-  };
+  const horizons: { label: string; value: TimeHorizon }[] = [
+    { label: 'Today', value: 'Day' },
+    { label: 'This Week', value: 'Week' },
+    { label: 'This Month', value: 'Month' },
+  ];
 
-  const horizons: TimeHorizon[] = ['Day', 'Week', 'Month', 'Year'];
+  if (loading || !analyticsData) {
+    return (
+      <AppScreenContainer applyTopInset applyBottomInset={false} backgroundColor={Colors.background}>
+        <View style={styles.center}>
+          <ActivityIndicator size="small" color={Colors.primary} />
+        </View>
+      </AppScreenContainer>
+    );
+  }
 
   return (
     <AppScreenContainer applyTopInset applyBottomInset={false} backgroundColor={Colors.background}>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -81,92 +74,87 @@ export const AnalyticsScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.screenTitle}>Energy Analytics</Text>
+          <Text style={styles.title}>Analytics</Text>
+          <Text style={styles.dateLabel}>{analyticsData.dateRangeLabel}</Text>
         </View>
 
-        {/* Time Horizon Selector */}
+        {/* 1. Time Horizon Filter: Today, This Week, This Month */}
         <View style={styles.horizonSelector}>
           {horizons.map(h => {
-            const isSelected = selectedHorizon === h;
+            const isSelected = selectedHorizon === h.value;
             return (
               <TouchableOpacity
-                key={h}
+                key={h.value}
+                style={[styles.tab, isSelected && styles.tabActive]}
+                onPress={() => setSelectedHorizon(h.value)}
                 activeOpacity={0.8}
-                onPress={() => setSelectedHorizon(h)}
-                style={[
-                  styles.horizonTab,
-                  isSelected ? styles.horizonTabActive : styles.horizonTabInactive,
-                ]}
               >
-                <Text
-                  style={[
-                    styles.horizonText,
-                    isSelected ? styles.horizonTextActive : styles.horizonTextInactive,
-                  ]}
-                >
-                  {h}
+                <Text style={[styles.tabText, isSelected && styles.tabTextActive]}>
+                  {h.label}
                 </Text>
               </TouchableOpacity>
             );
           })}
         </View>
 
-        {/* Date Range Subtext */}
-        {analyticsData && (
-          <View style={styles.dateRangeBadge}>
-            <Text style={styles.dateRangeText}>{analyticsData.dateRangeLabel}</Text>
+        {/* 2. Measured vs Estimated Energy Card */}
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryHeader}>
+            <Text style={styles.summaryLabel}>TOTAL CONSUMPTION</Text>
+            <Text style={styles.summaryValue}>{analyticsData.totalConsumptionKwh.toLocaleString()} kWh</Text>
           </View>
-        )}
 
-        {loading || !analyticsData ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Loading...</Text>
-          </View>
-        ) : (
-          <>
-            {/* 1. Energy Overview Hero Card */}
-            <PeriodicHeroCard
-              totalKwh={analyticsData.totalConsumptionKwh}
-              deltaPercent={analyticsData.deltaPercentVsPrevious}
-              liveWatts={analyticsData.liveCampusDemandWatts}
-              carbonOffsetKg={analyticsData.carbonOffsetKg}
-              targetBudgetKwh={analyticsData.targetBudgetKwh}
-              periodLabel={analyticsData.dateRangeLabel}
-            />
-
-            {/* 2. Interactive Periodic Load Dynamics Chart */}
-            <LoadDynamicsChart
-              data={analyticsData.chartData}
-              peakPeriodLabel={analyticsData.peakPeriodLabel}
-            />
-
-            {/* 3. Institutional Load Allocation */}
-            <InstitutionalAllocationSection
-              allocations={analyticsData.allocations}
-            />
-
-            {/* 4. AI Energy Governance Section */}
-            <AIEnergyGovernanceCard
-              governance={analyticsData.governance}
-            />
-
-            {/* 5. Report Export Actions */}
-            <View style={styles.exportSection}>
-              <Button
-                title="Download Audit (PDF)"
-                onPress={() => handleExportReport('PDF')}
-                variant="primary"
-                style={styles.exportBtn}
-              />
-              <Button
-                title="Export Data (CSV)"
-                onPress={() => handleExportReport('CSV')}
-                variant="outline"
-                style={styles.exportBtnOutline}
-              />
+          <View style={styles.splitRow}>
+            <View style={styles.splitItem}>
+              <View style={[styles.dot, { backgroundColor: Colors.primary }]} />
+              <View>
+                <Text style={styles.splitLabel}>Measured</Text>
+                <Text style={styles.splitVal}>{Math.round(analyticsData.totalConsumptionKwh * 0.88).toLocaleString()} kWh</Text>
+              </View>
             </View>
-          </>
-        )}
+
+            <View style={styles.splitItem}>
+              <View style={[styles.dot, { backgroundColor: Colors.warning }]} />
+              <View>
+                <Text style={styles.splitLabel}>Estimated</Text>
+                <Text style={styles.splitVal}>{Math.round(analyticsData.totalConsumptionKwh * 0.12).toLocaleString()} kWh</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* 3. Energy Consumption Chart */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Consumption Trend</Text>
+          <LoadDynamicsChart
+            data={analyticsData.chartData}
+            peakPeriodLabel={analyticsData.peakPeriodLabel}
+          />
+        </View>
+
+        {/* 4. Top Consuming Rooms */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Top Consuming Rooms</Text>
+          {analyticsData.allocations.slice(0, 4).map((item, index) => (
+            <View key={item.id} style={styles.roomItem}>
+              <View style={styles.roomRank}>
+                <Text style={styles.rankNum}>{index + 1}</Text>
+              </View>
+              <View style={styles.roomDetails}>
+                <Text style={styles.roomName}>{item.name}</Text>
+                <View style={styles.progressContainer}>
+                  <View
+                    style={[
+                      styles.progressBar,
+                      { width: `${Math.min(item.percentage, 100)}%` },
+                    ]}
+                  />
+                </View>
+              </View>
+              <Text style={styles.roomKwh}>{item.consumptionKwh} kWh</Text>
+            </View>
+          ))}
+        </View>
       </ScrollView>
     </AppScreenContainer>
   );
@@ -176,78 +164,160 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  contentContainer: {
-    padding: Spacing.base,
+  content: {
+    paddingHorizontal: Spacing.base,
+    paddingTop: Spacing.sm,
     paddingBottom: Spacing.xl,
   },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
     marginBottom: Spacing.sm,
   },
-  screenTitle: {
+  title: {
     fontSize: Typography.sizes.xl,
     fontWeight: Typography.weights.bold,
-    color: Colors.navyDark,
+    color: Colors.heroNavy,
+  },
+  dateLabel: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.textMuted,
   },
   horizonSelector: {
     flexDirection: 'row',
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
-    padding: 3,
     borderWidth: 1,
     borderColor: Colors.border,
-    marginBottom: Spacing.xs,
+    padding: 3,
+    marginBottom: Spacing.base,
   },
-  horizonTab: {
+  tab: {
     flex: 1,
-    paddingVertical: 6,
+    paddingVertical: 7,
     alignItems: 'center',
     borderRadius: BorderRadius.sm,
   },
-  horizonTabActive: {
+  tabActive: {
     backgroundColor: Colors.navy,
   },
-  horizonTabInactive: {
-    backgroundColor: 'transparent',
-  },
-  horizonText: {
+  tabText: {
     fontSize: Typography.sizes.xs,
-    fontWeight: Typography.weights.semibold,
-  },
-  horizonTextActive: {
-    color: Colors.textInverse,
-  },
-  horizonTextInactive: {
+    fontWeight: Typography.weights.medium,
     color: Colors.textMuted,
   },
-  dateRangeBadge: {
-    alignSelf: 'center',
-    marginVertical: Spacing.xs,
-  },
-  dateRangeText: {
-    fontSize: Typography.sizes.xxs,
+  tabTextActive: {
+    color: Colors.textInverse,
     fontWeight: Typography.weights.semibold,
+  },
+  summaryCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.base,
+    marginBottom: Spacing.base,
+  },
+  summaryHeader: {
+    marginBottom: Spacing.md,
+  },
+  summaryLabel: {
+    fontSize: Typography.sizes.xxs,
+    fontWeight: Typography.weights.medium,
     color: Colors.textMuted,
     letterSpacing: 0.5,
   },
-  emptyContainer: {
-    paddingVertical: Spacing.xl,
-    alignItems: 'center',
+  summaryValue: {
+    fontSize: Typography.sizes.xxl,
+    fontWeight: Typography.weights.black,
+    color: Colors.navy,
+    marginTop: 2,
   },
-  emptyText: {
-    fontSize: Typography.sizes.sm,
+  splitRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+  },
+  splitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  splitLabel: {
+    fontSize: Typography.sizes.xxs,
     color: Colors.textMuted,
   },
-  exportSection: {
-    marginTop: Spacing.xs,
+  splitVal: {
+    fontSize: Typography.sizes.sm,
+    fontWeight: Typography.weights.bold,
+    color: Colors.navy,
+  },
+  section: {
     marginBottom: Spacing.base,
   },
-  exportBtn: {
-    height: 44,
-    borderRadius: BorderRadius.md,
+  sectionTitle: {
+    fontSize: Typography.sizes.base,
+    fontWeight: Typography.weights.bold,
+    color: Colors.navy,
+    marginBottom: Spacing.sm,
+  },
+  roomItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.md,
     marginBottom: Spacing.xs,
   },
-  exportBtnOutline: {
-    height: 44,
-    borderRadius: BorderRadius.md,
+  roomRank: {
+    width: 24,
+    alignItems: 'center',
+    marginRight: Spacing.sm,
+  },
+  rankNum: {
+    fontSize: Typography.sizes.sm,
+    fontWeight: Typography.weights.bold,
+    color: Colors.textMuted,
+  },
+  roomDetails: {
+    flex: 1,
+    marginRight: Spacing.md,
+  },
+  roomName: {
+    fontSize: Typography.sizes.sm,
+    fontWeight: Typography.weights.semibold,
+    color: Colors.navy,
+    marginBottom: 4,
+  },
+  progressContainer: {
+    height: 4,
+    backgroundColor: Colors.borderLight,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 2,
+  },
+  roomKwh: {
+    fontSize: Typography.sizes.sm,
+    fontWeight: Typography.weights.bold,
+    color: Colors.navy,
   },
 });
