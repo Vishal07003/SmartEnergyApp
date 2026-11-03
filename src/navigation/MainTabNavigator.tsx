@@ -7,6 +7,7 @@ import {
   DoorOpen,
   Cpu,
   ChartColumn,
+  Bell,
   UserRound,
 } from 'lucide-react-native';
 import { MainTabParamList } from './types';
@@ -14,6 +15,7 @@ import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
 import { RoomsScreen } from '../screens/rooms/RoomsScreen';
 import { DevicesScreen } from '../screens/devices/DevicesScreen';
 import { AnalyticsScreen } from '../screens/analytics/AnalyticsScreen';
+import { AlertsScreen } from '../screens/alerts/AlertsScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { Colors, Typography } from '../constants/theme';
 
@@ -112,6 +114,20 @@ export const MainTabNavigator: React.FC = () => {
           tabBarLabel: 'Analytics',
           tabBarIcon: ({ color }) => (
             <ChartColumn
+              color={color}
+              size={ICON_SIZE}
+              strokeWidth={color === ACTIVE_COLOR ? 2.3 : 1.8}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="AlertsTab"
+        component={AlertsScreen}
+        options={{
+          tabBarLabel: 'Alerts',
+          tabBarIcon: ({ color }) => (
+            <Bell
               color={color}
               size={ICON_SIZE}
               strokeWidth={color === ACTIVE_COLOR ? 2.3 : 1.8}
