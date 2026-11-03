@@ -4,6 +4,7 @@ import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme
 import { Card, Button, Input, AppScreenContainer, AppKeyboardAwareView, Icon } from '../../components/common';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/types';
+import { liveApi } from '../../services/api';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
@@ -11,25 +12,29 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleResetRequest = () => {
+  const handleResetRequest = async () => {
     if (!email.trim()) {
-      Alert.alert('Required', 'Please enter your institutional email address.');
+      Alert.alert('Required', 'Please enter your registered email address.');
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const resp = await liveApi.forgotPassword(email.trim());
       Alert.alert(
-        'Reset Link Dispatched',
-        'If an account exists for this email, password recovery instructions have been sent.',
+        'Password Recovery Dispatched',
+        resp.detail || 'If an account exists for this email, password recovery instructions have been sent.',
         [
           {
             text: 'Proceed to Reset',
-            onPress: () => navigation.navigate('ResetPassword', { email }),
+            onPress: () => navigation.navigate('ResetPassword', { email: email.trim() }),
           },
         ]
       );
-    }, 700);
+    } catch (err: any) {
+      Alert.alert('Request Failed', err.message || 'Unable to process reset request.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
