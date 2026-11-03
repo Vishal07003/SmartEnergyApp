@@ -139,7 +139,7 @@ export const DeviceDetailsScreen: React.FC<Props> = ({ route }) => {
                 disabled={ch.safetyLocked || !isOnline}
                 onValueChange={() => handleToggleChannel(ch.channelId, ch.label)}
                 trackColor={{ false: Colors.border, true: Colors.primaryLight }}
-                thumbColor={ch.isOn ? Colors.primary : Colors.textSubtle}
+                thumbColor={ch.isOn && isOnline ? Colors.primary : Colors.textSubtle}
               />
             </View>
           ))}
@@ -279,6 +279,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     padding: Spacing.base,
+    minHeight: 64,
     marginBottom: Spacing.xs,
   },
   channelMain: {
