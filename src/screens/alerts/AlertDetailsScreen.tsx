@@ -10,7 +10,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
-import { AppScreenContainer, Card, Button } from '../../components/common';
+import { AppScreenContainer, Button } from '../../components/common';
 import { mockApi } from '../../services/api';
 import { AIAlert } from '../../types';
 
@@ -20,6 +20,7 @@ export const AlertDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   const { alertId } = route.params;
   const [alert, setAlert] = useState<AIAlert | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [resolving, setResolving] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchAlert = async () => {
@@ -28,7 +29,7 @@ export const AlertDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
         const found = all.find(a => a.id === alertId);
         if (found) setAlert(found);
       } catch {
-        Alert.alert('Error', 'Unable to retrieve alert details.');
+        // Fallback
       } finally {
         setLoading(false);
       }
@@ -40,56 +41,53 @@ export const AlertDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
     if (alert) {
       mockApi.acknowledgeAlert(alert.id);
       setAlert({ ...alert, isAcknowledged: true });
-      Alert.alert('Acknowledged', 'Alert marked as handled.');
+    }
+  };
+
+  const handleResolve = () => {
+    if (alert) {
+      setResolving(true);
+      setTimeout(() => {
+        mockApi.acknowledgeAlert(alert.id);
+        setResolving(false);
+        navigation.goBack();
+      }, 500);
     }
   };
 
   if (loading || !alert) {
     return (
       <AppScreenContainer applyTopInset={false} applyBottomInset backgroundColor={Colors.background}>
-        <View style={styles.centerContainer}>
+        <View style={styles.center}>
           <ActivityIndicator size="small" color={Colors.primary} />
         </View>
       </AppScreenContainer>
     );
   }
 
-  const isCritical = alert.severity === 'CRITICAL';
-  const isWarning = alert.severity === 'WARNING';
+  const isCrit = alert.severity === 'CRITICAL';
+  const isWarn = alert.severity === 'WARNING';
 
   return (
     <AppScreenContainer applyTopInset={false} applyBottomInset backgroundColor={Colors.background}>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Severity Banner */}
-        <Card
-          style={[
-            styles.bannerCard,
-            isCritical ? styles.critCard : isWarning ? styles.warnCard : undefined,
-          ]}
-        >
-          <View style={styles.badgeRow}>
+        {/* 1. What & Where */}
+        <View style={[styles.mainCard, isCrit && styles.cardCrit]}>
+          <View style={styles.headerRow}>
             <View
               style={[
-                styles.badge,
-                isCritical
-                  ? styles.critBadge
-                  : isWarning
-                  ? styles.warnBadge
-                  : styles.infoBadge,
+                styles.severityBadge,
+                isCrit ? styles.badgeCrit : isWarn ? styles.badgeWarn : styles.badgeInfo,
               ]}
             >
               <Text
                 style={[
-                  styles.badgeText,
-                  isCritical
-                    ? styles.critText
-                    : isWarning
-                    ? styles.warnText
-                    : styles.infoText,
+                  styles.severityText,
+                  isCrit ? styles.textCrit : isWarn ? styles.textWarn : styles.textInfo,
                 ]}
               >
                 {alert.severity}
@@ -97,46 +95,50 @@ export const AlertDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
             </View>
             <Text style={styles.timestamp}>{alert.timestamp}</Text>
           </View>
-          <Text style={styles.title}>{alert.title}</Text>
-          <Text style={styles.location}>{alert.roomName}</Text>
-        </Card>
 
-        {/* Diagnosis & Cause */}
-        <Text style={styles.sectionTitle}>Diagnosis</Text>
-        <Card style={styles.sectionCard}>
-          <Text style={styles.fieldLabel}>DESCRIPTION</Text>
-          <Text style={styles.fieldValue}>{alert.description}</Text>
+          <Text style={styles.alertTitle}>{alert.title}</Text>
+          <Text style={styles.roomLocation}>Location: {alert.roomName}</Text>
+        </View>
 
-          <Text style={[styles.fieldLabel, styles.topGap]}>POSSIBLE CAUSE</Text>
-          <Text style={styles.fieldValue}>{alert.possibleReason}</Text>
-        </Card>
+        {/* 2. Possible Reason */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionHeader}>POSSIBLE REASON</Text>
+          <Text style={styles.sectionBody}>
+            {alert.category === 'UNOCCUPIED_WASTAGE'
+              ? 'Active loads detected while sensors report zero room occupancy.'
+              : alert.category === 'ABNORMAL_SPIKE'
+              ? 'Measured active load exceeded normal circuit thresholds.'
+              : alert.category === 'OVERLOAD_RISK'
+              ? 'Continuous high current draw approaching safety trip limits.'
+              : 'Sensors or controller offline or failed to report heartbeat.'}
+          </Text>
+        </View>
 
-        {/* Recommended Action */}
-        <Text style={styles.sectionTitle}>Recommended Action</Text>
-        <Card style={styles.sectionCard}>
-          <Text style={styles.fieldValue}>{alert.recommendedAction}</Text>
-          {alert.powerWastageEstimateWatts ? (
-            <View style={styles.wastePill}>
-              <Text style={styles.wasteText}>
-                Estimated Wastage: ~{alert.powerWastageEstimateWatts} W
-              </Text>
-            </View>
-          ) : null}
-        </Card>
+        {/* 3. Recommended Action */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionHeader}>RECOMMENDED ACTION</Text>
+          <Text style={styles.sectionBody}>{alert.recommendedAction}</Text>
+        </View>
 
-        {/* Action Button */}
-        {!alert.isAcknowledged ? (
+        {/* 4. Action Buttons */}
+        <View style={styles.actions}>
+          {!alert.isAcknowledged && (
+            <Button
+              title="Acknowledge"
+              onPress={handleAcknowledge}
+              variant="outline"
+              style={styles.actionBtn}
+            />
+          )}
+
           <Button
-            title="Mark Acknowledged"
-            onPress={handleAcknowledge}
+            title="Resolve"
+            onPress={handleResolve}
+            loading={resolving}
             variant="primary"
             style={styles.actionBtn}
           />
-        ) : (
-          <View style={styles.ackBox}>
-            <Text style={styles.ackBoxText}>Alert Acknowledged by Staff</Text>
-          </View>
-        )}
+        </View>
       </ScrollView>
     </AppScreenContainer>
   );
@@ -146,129 +148,100 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  contentContainer: {
+  content: {
     padding: Spacing.base,
     paddingBottom: Spacing.xl,
   },
-  centerContainer: {
+  center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  bannerCard: {
+  mainCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: Spacing.base,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.base,
   },
-  critCard: {
-    borderColor: '#FED7D7',
-    backgroundColor: '#FFFBFB',
+  cardCrit: {
+    borderColor: '#FECACA',
+    backgroundColor: '#FFF9F9',
   },
-  warnCard: {
-    borderColor: '#FEEBC8',
-    backgroundColor: '#FFFCF8',
-  },
-  badgeRow: {
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
-  badge: {
+  severityBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: BorderRadius.xs,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.full,
   },
-  critBadge: {
+  badgeCrit: {
     backgroundColor: Colors.dangerLight,
   },
-  warnBadge: {
+  badgeWarn: {
     backgroundColor: Colors.warningLight,
   },
-  infoBadge: {
+  badgeInfo: {
     backgroundColor: Colors.infoLight,
   },
-  badgeText: {
+  severityText: {
     fontSize: Typography.sizes.xxs,
     fontWeight: Typography.weights.bold,
   },
-  critText: {
+  textCrit: {
     color: Colors.danger,
   },
-  warnText: {
+  textWarn: {
     color: Colors.warning,
   },
-  infoText: {
-    color: Colors.navy,
+  textInfo: {
+    color: Colors.info,
   },
   timestamp: {
-    fontSize: Typography.sizes.xxs,
-    color: Colors.textSubtle,
+    fontSize: Typography.sizes.xs,
+    color: Colors.textMuted,
   },
-  title: {
+  alertTitle: {
     fontSize: Typography.sizes.md,
     fontWeight: Typography.weights.bold,
-    color: Colors.textMain,
-  },
-  location: {
-    fontSize: Typography.sizes.xs,
-    color: Colors.textMuted,
-    marginTop: 2,
-  },
-  sectionTitle: {
-    fontSize: Typography.sizes.xs,
-    fontWeight: Typography.weights.bold,
-    color: Colors.textMuted,
-    marginTop: Spacing.md,
+    color: Colors.heroNavy,
     marginBottom: Spacing.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  },
+  roomLocation: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.textMuted,
   },
   sectionCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: Spacing.base,
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.base,
   },
-  fieldLabel: {
+  sectionHeader: {
     fontSize: Typography.sizes.xxs,
     fontWeight: Typography.weights.bold,
     color: Colors.textMuted,
     letterSpacing: 0.5,
-    marginBottom: 2,
+    marginBottom: Spacing.xs,
   },
-  fieldValue: {
+  sectionBody: {
     fontSize: Typography.sizes.sm,
     color: Colors.textMain,
     lineHeight: 20,
   },
-  topGap: {
+  actions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
     marginTop: Spacing.sm,
-  },
-  wastePill: {
-    backgroundColor: Colors.surfaceSubtle,
-    borderRadius: BorderRadius.xs,
-    padding: Spacing.xs,
-    alignSelf: 'flex-start',
-    marginTop: Spacing.sm,
-  },
-  wasteText: {
-    fontSize: Typography.sizes.xxs,
-    fontWeight: Typography.weights.semibold,
-    color: Colors.warning,
   },
   actionBtn: {
-    height: 44,
-    borderRadius: BorderRadius.md,
-    marginTop: Spacing.md,
-  },
-  ackBox: {
-    backgroundColor: Colors.surfaceSubtle,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.sm,
-    alignItems: 'center',
-    marginTop: Spacing.md,
-  },
-  ackBoxText: {
-    fontSize: Typography.sizes.xs,
-    color: Colors.textMuted,
-    fontWeight: Typography.weights.semibold,
+    flex: 1,
   },
 });
