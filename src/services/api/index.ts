@@ -47,7 +47,7 @@ class MockApiService {
   }
 
   async getAnalyticsByHorizon(horizon: import('../../types').TimeHorizon): Promise<import('../../types').PeriodAnalyticsData> {
-    const { mockAnalyticsData } = await import('../mockData/analyticsData');
+    const { mockAnalyticsData } = require('../mockData/analyticsData');
     return { ...mockAnalyticsData[horizon] };
   }
 
@@ -82,4 +82,3 @@ class MockApiService {
 }
 
 export const mockApi = new MockApiService();
-
