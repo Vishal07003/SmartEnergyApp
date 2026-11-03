@@ -17,7 +17,7 @@ import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme
 import { AppScreenContainer, Card } from '../../components/common';
 import { EnergyBarChart } from '../../components/charts';
 import { mockApi } from '../../services/api';
-import { StaffUser, SystemEnergyMetrics, Room, AIAlert } from '../../types';
+import { StaffUser, SystemEnergyMetrics, Room, IoTDevice, AIAlert } from '../../types';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'HomeTab'>,
@@ -30,19 +30,22 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   const [user, setUser] = useState<StaffUser | null>(null);
   const [metrics, setMetrics] = useState<SystemEnergyMetrics | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [devices, setDevices] = useState<IoTDevice[]>([]);
   const [alerts, setAlerts] = useState<AIAlert[]>([]);
 
   const loadData = async () => {
     try {
-      const [userData, metricData, roomList, alertList] = await Promise.all([
+      const [userData, metricData, roomList, deviceList, alertList] = await Promise.all([
         mockApi.getStaffProfile(),
         mockApi.getDashboardMetrics(),
         mockApi.getRooms(),
+        mockApi.getDevices(),
         mockApi.getAlerts(),
       ]);
       setUser(userData);
       setMetrics(metricData);
       setRooms(roomList);
+      setDevices(deviceList);
       setAlerts(alertList);
     } catch {
       // Keep UI clean, handled via fallback
@@ -74,6 +77,11 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   const unackAlerts = alerts.filter(a => !a.isAcknowledged);
   const isSaving = true; // vs yesterday
 
+  // Derive counts from actual devices list to guarantee consistency with DevicesScreen
+  const totalDeviceCount = devices.length;
+  const onlineDeviceCount = devices.filter(d => d.status === 'ONLINE').length;
+  const connectedPercent = totalDeviceCount > 0 ? Math.round((onlineDeviceCount / totalDeviceCount) * 100) : 0;
+
   return (
     <AppScreenContainer applyTopInset applyBottomInset={false} backgroundColor={Colors.background}>
       <ScrollView
@@ -99,8 +107,10 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.alertBtn}
             onPress={() => navigation.navigate('Alerts')}
             activeOpacity={0.7}
+            accessibilityLabel={`Alerts, ${unackAlerts.length} pending`}
+            accessibilityRole="button"
           >
-            <Bell size={20} color={Colors.navy} />
+            <Bell size={22} color={Colors.navy} />
             {unackAlerts.length > 0 && (
               <View style={styles.alertBadge}>
                 <Text style={styles.alertCount}>{unackAlerts.length}</Text>
@@ -167,10 +177,13 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
             onPress={() => navigation.navigate('MainApp', { screen: 'DevicesTab' })}
           >
             <Text style={styles.metricLabel}>ONLINE DEVICES</Text>
-            <Text style={styles.metricValue}>{metrics.totalConnectedDevices}</Text>
+            <Text style={styles.metricValue}>
+              {onlineDeviceCount}
+              <Text style={styles.metricTotal}> / {totalDeviceCount}</Text>
+            </Text>
             <View style={styles.statusRow}>
               <View style={[styles.dot, { backgroundColor: Colors.primary }]} />
-              <Text style={styles.statusText}>98.4% Connected</Text>
+              <Text style={styles.statusText}>{connectedPercent}% Connected</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -275,7 +288,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: Spacing.base,
     paddingTop: Spacing.sm,
-    paddingBottom: Spacing.xl,
+    paddingBottom: 96,
   },
   center: {
     flex: 1,
@@ -289,7 +302,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.base,
   },
   welcome: {
-    fontSize: Typography.sizes.lg,
+    fontSize: Typography.sizes.xl,
     fontWeight: Typography.weights.bold,
     color: Colors.heroNavy,
   },
@@ -299,8 +312,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   alertBtn: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     borderRadius: BorderRadius.full,
     backgroundColor: Colors.surface,
     borderWidth: 1,
@@ -310,15 +323,15 @@ const styles = StyleSheet.create({
   },
   alertBadge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
+    top: 6,
+    right: 6,
     backgroundColor: Colors.danger,
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 3,
+    paddingHorizontal: 4,
   },
   alertCount: {
     color: Colors.textInverse,
@@ -457,7 +470,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   sectionTitle: {
-    fontSize: Typography.sizes.base,
+    fontSize: Typography.sizes.lg,
     fontWeight: Typography.weights.bold,
     color: Colors.navy,
     marginBottom: Spacing.sm,
@@ -466,6 +479,8 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.sm,
     fontWeight: Typography.weights.semibold,
     color: Colors.primary,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
   },
   alertItem: {
     flexDirection: 'row',
@@ -475,7 +490,8 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.card,
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: Spacing.md,
+    padding: Spacing.base,
+    minHeight: 56,
     marginBottom: Spacing.sm,
   },
   alertCrit: {
@@ -515,7 +531,8 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.card,
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: Spacing.md,
+    padding: Spacing.base,
+    minHeight: 56,
     marginBottom: Spacing.sm,
   },
   roomLeft: {
