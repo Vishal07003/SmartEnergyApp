@@ -145,10 +145,10 @@ export const ProfileScreen: React.FC = () => {
               <User size={26} color={Colors.primary} />
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.userName}>{user?.name || 'Staff User'}</Text>
-              <Text style={styles.userEmail}>{user?.email || 'staff@institution.edu'}</Text>
+              <Text style={styles.userName}>{user?.name || 'Registered User'}</Text>
+              <Text style={styles.userEmail}>{user?.email || 'user@institution.edu'}</Text>
               <Text style={styles.userDept}>
-                {user?.department || 'Facility Administration'}
+                {user?.department || 'Campus Facility'}
               </Text>
             </View>
           </View>
@@ -174,7 +174,7 @@ export const ProfileScreen: React.FC = () => {
               <UserCheck size={18} color={Colors.navy} />
               <View style={styles.menuTextGroup}>
                 <Text style={styles.menuLabel}>Personal Information</Text>
-                <Text style={styles.menuSub}>{user?.employeeId || 'STAFF'} • {(user?.role || 'staff').toUpperCase()}</Text>
+                <Text style={styles.menuSub}>{user?.employeeId || 'USR-01'} • Active Member</Text>
               </View>
             </View>
             <ChevronRight size={18} color={Colors.textSubtle} />

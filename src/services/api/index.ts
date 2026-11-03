@@ -35,6 +35,60 @@ class LiveApiService {
   // AUTHENTICATION & PROFILE
   // ==========================================
 
+  async register(payload: {
+    username: string;
+    email: string;
+    password: string;
+    password_confirm: string;
+    first_name?: string;
+    last_name?: string;
+    department?: string;
+  }): Promise<StaffUser> {
+    const data = await apiClient.request<LoginResponse & { user: any }>('/auth/register/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      requiresAuth: false,
+    });
+
+    if (data.access && data.refresh) {
+      sessionStorage.setTokens({
+        accessToken: data.access,
+        refreshToken: data.refresh,
+      });
+    }
+
+    return this.transformBackendUser(data.user);
+  }
+
+  async forgotPassword(email: string): Promise<{ detail: string; reset_token?: string }> {
+    return await apiClient.request<{ detail: string; reset_token?: string }>('/auth/forgot-password/', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+      requiresAuth: false,
+    });
+  }
+
+  async resetPassword(payload: {
+    email: string;
+    token: string;
+    new_password: string;
+    confirm_new_password: string;
+  }): Promise<{ detail: string }> {
+    return await apiClient.request<{ detail: string }>('/auth/reset-password/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      requiresAuth: false,
+    });
+  }
+
+  async verifyEmail(email: string, token: string): Promise<{ detail: string }> {
+    return await apiClient.request<{ detail: string }>('/auth/verify-email/', {
+      method: 'POST',
+      body: JSON.stringify({ email, token }),
+      requiresAuth: false,
+    });
+  }
+
   async login(username: string, password: string): Promise<StaffUser> {
     const data = await apiClient.request<LoginResponse>('/auth/login/', {
       method: 'POST',

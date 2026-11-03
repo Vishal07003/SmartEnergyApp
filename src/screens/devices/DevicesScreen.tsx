@@ -117,16 +117,14 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.title}>Devices</Text>
             <Text style={styles.countText}>{filteredDevices.length} devices</Text>
           </View>
-          {user?.isAdmin && (
-            <TouchableOpacity
-              style={styles.addDeviceBtn}
-              onPress={() => setAddModalVisible(true)}
-              activeOpacity={0.8}
-            >
-              <Plus size={16} color={Colors.surface} />
-              <Text style={styles.addDeviceBtnText}>Add Device</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={styles.addDeviceBtn}
+            onPress={() => setAddModalVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Plus size={16} color={Colors.surface} />
+            <Text style={styles.addDeviceBtnText}>Add Device</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Search */}
