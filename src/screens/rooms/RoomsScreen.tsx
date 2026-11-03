@@ -7,15 +7,15 @@ import {
   TextInput,
   TouchableOpacity,
   RefreshControl,
-  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Search, ChevronRight } from 'lucide-react-native';
 import { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
-import { AppScreenContainer } from '../../components/common';
-import { DetailedRoomCard, HardwareSensorSummaryBanner } from '../../components/rooms';
+import { AppScreenContainer, OccupancyBadge } from '../../components/common';
 import { mockApi } from '../../services/api';
 import { Room } from '../../types';
 
@@ -36,7 +36,7 @@ export const RoomsScreen: React.FC<Props> = ({ navigation }) => {
       const data = await mockApi.getRooms();
       setRooms(data);
     } catch {
-      Alert.alert('Error', 'Unable to retrieve room sensor records.');
+      // Keep UI resilient
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -61,98 +61,37 @@ export const RoomsScreen: React.FC<Props> = ({ navigation }) => {
     return rooms.filter(room => {
       const matchesSearch =
         room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        room.roomNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        room.type.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesFloor =
-        selectedFloor === 'All' || room.floor === selectedFloor;
-
+        room.roomNumber.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesFloor = selectedFloor === 'All' || room.floor === selectedFloor;
       return matchesSearch && matchesFloor;
     });
   }, [rooms, searchQuery, selectedFloor]);
 
-  const handleRoomPress = (room: Room) => {
-    navigation.navigate('RoomDetails', { roomId: room.id, roomName: room.name });
-  };
-
-  const handleAutoShutdown = (room: Room) => {
-    Alert.alert(
-      'Confirm Auto-Shutdown',
-      `[MOCK DEMO] Turn off ${room.electrical.activeApplianceCount} active loads in ${room.name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Shutdown',
-          style: 'destructive',
-          onPress: () => {
-            setRooms(prev =>
-              prev.map(r => {
-                if (r.id === room.id) {
-                  return {
-                    ...r,
-                    occupancy: {
-                      ...r.occupancy,
-                      state: 'EMPTY',
-                      idleTimerMinutes: 0,
-                    },
-                    electrical: {
-                      ...r.electrical,
-                      livePowerWatts: 35,
-                      activeApplianceCount: 0,
-                    },
-                  };
-                }
-                return r;
-              })
-            );
-          },
-        },
-      ]
+  if (loading) {
+    return (
+      <AppScreenContainer applyTopInset applyBottomInset={false} backgroundColor={Colors.background}>
+        <View style={styles.center}>
+          <ActivityIndicator size="small" color={Colors.primary} />
+        </View>
+      </AppScreenContainer>
     );
-  };
-
-  const handleToggleMasterRelay = (roomId: string, newState: boolean) => {
-    setRooms(prev =>
-      prev.map(r => {
-        if (r.id === roomId) {
-          return {
-            ...r,
-            electrical: {
-              ...r.electrical,
-              livePowerWatts: newState ? 850 : 25,
-            },
-          };
-        }
-        return r;
-      })
-    );
-  };
+  }
 
   return (
     <AppScreenContainer applyTopInset applyBottomInset={false} backgroundColor={Colors.background}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[Colors.primary]}
-            tintColor={Colors.primary}
-          />
-        }
-      >
-        {/* Header Title Section */}
+      <View style={styles.container}>
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.screenTitle}>Rooms Monitoring</Text>
+          <Text style={styles.title}>Rooms</Text>
+          <Text style={styles.countText}>{filteredRooms.length} rooms</Text>
         </View>
 
-        {/* Search Input Bar */}
+        {/* Search Input */}
         <View style={styles.searchBar}>
+          <Search size={16} color={Colors.textMuted} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search room or lab..."
+            placeholder="Search rooms..."
             placeholderTextColor={Colors.textSubtle}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -160,30 +99,23 @@ export const RoomsScreen: React.FC<Props> = ({ navigation }) => {
           />
         </View>
 
-        {/* Floor Filter Horizontal Pills */}
+        {/* Floor Filter Tabs */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterPillContainer}
+          style={styles.floorTabs}
+          contentContainerStyle={styles.floorTabsContent}
         >
           {floorOptions.map(floor => {
             const isSelected = selectedFloor === floor;
             return (
               <TouchableOpacity
                 key={floor}
-                activeOpacity={0.8}
+                style={[styles.floorChip, isSelected && styles.floorChipActive]}
                 onPress={() => setSelectedFloor(floor)}
-                style={[
-                  styles.filterPill,
-                  isSelected ? styles.filterPillActive : styles.filterPillInactive,
-                ]}
+                activeOpacity={0.8}
               >
-                <Text
-                  style={[
-                    styles.filterPillText,
-                    isSelected ? styles.filterTextActive : styles.filterTextInactive,
-                  ]}
-                >
+                <Text style={[styles.floorChipText, isSelected && styles.floorChipTextActive]}>
                   {floor}
                 </Text>
               </TouchableOpacity>
@@ -191,41 +123,53 @@ export const RoomsScreen: React.FC<Props> = ({ navigation }) => {
           })}
         </ScrollView>
 
-        {/* Hardware Status Banner */}
-        <HardwareSensorSummaryBanner
-          totalSensors={rooms.length * 4}
-          overallConfidence={96.2}
-        />
-
-        {/* List Header */}
-        <View style={styles.countRow}>
-          <Text style={styles.countText}>{filteredRooms.length} Rooms</Text>
-          <Text style={styles.activeRatio}>
-            {rooms.filter(r => r.occupancy.state === 'ACTIVE').length} Active
-          </Text>
-        </View>
-
-        {/* List of Detailed Room Cards */}
-        {loading ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Loading...</Text>
-          </View>
-        ) : filteredRooms.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No matching rooms found.</Text>
-          </View>
-        ) : (
-          filteredRooms.map(room => (
-            <DetailedRoomCard
-              key={room.id}
-              room={room}
-              onPress={handleRoomPress}
-              onAutoShutdown={handleAutoShutdown}
-              onToggleMasterRelay={handleToggleMasterRelay}
+        {/* Rooms List */}
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[Colors.primary]}
+              tintColor={Colors.primary}
             />
-          ))
-        )}
-      </ScrollView>
+          }
+        >
+          {filteredRooms.map(room => (
+            <TouchableOpacity
+              key={room.id}
+              style={styles.roomCard}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('RoomDetails', { roomId: room.id, roomName: room.name })}
+            >
+              <View style={styles.cardMain}>
+                <View style={styles.nameRow}>
+                  <Text style={styles.roomName}>{room.name}</Text>
+                  <OccupancyBadge state={room.occupancy.state} />
+                </View>
+
+                <View style={styles.cardFooter}>
+                  <Text style={styles.roomMeta}>
+                    Room {room.roomNumber} • {room.floor}
+                  </Text>
+                  <View style={styles.energyWrap}>
+                    <Text style={styles.energyValue}>{room.electrical.livePowerWatts} W</Text>
+                    <ChevronRight size={16} color={Colors.textSubtle} />
+                  </View>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+
+          {filteredRooms.length === 0 && (
+            <View style={styles.empty}>
+              <Text style={styles.emptyText}>No matching rooms found</Text>
+            </View>
+          )}
+        </ScrollView>
+      </View>
     </AppScreenContainer>
   );
 };
@@ -233,78 +177,127 @@ export const RoomsScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: Spacing.base,
+    paddingTop: Spacing.sm,
   },
-  contentContainer: {
-    padding: Spacing.base,
-    paddingBottom: Spacing.xl,
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
     marginBottom: Spacing.sm,
   },
-  screenTitle: {
+  title: {
     fontSize: Typography.sizes.xl,
     fontWeight: Typography.weights.bold,
-    color: Colors.navyDark,
+    color: Colors.heroNavy,
+  },
+  countText: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.textMuted,
   },
   searchBar: {
-    marginBottom: Spacing.xs,
-  },
-  searchInput: {
-    height: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    height: 40,
+    marginBottom: Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
     fontSize: Typography.sizes.sm,
     color: Colors.textMain,
+    marginLeft: Spacing.xs,
+    paddingVertical: 0,
   },
-  filterPillContainer: {
-    paddingBottom: Spacing.sm,
+  floorTabs: {
+    maxHeight: 36,
+    marginBottom: Spacing.sm,
   },
-  filterPill: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 5,
+  floorTabsContent: {
+    gap: Spacing.xs,
+    paddingRight: Spacing.base,
+  },
+  floorChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: BorderRadius.full,
-    marginRight: Spacing.xs,
-    borderWidth: 1,
-  },
-  filterPillActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  filterPillInactive: {
     backgroundColor: Colors.surface,
+    borderWidth: 1,
     borderColor: Colors.border,
   },
-  filterPillText: {
+  floorChipActive: {
+    backgroundColor: Colors.navy,
+    borderColor: Colors.navy,
+  },
+  floorChipText: {
     fontSize: Typography.sizes.xs,
-    fontWeight: Typography.weights.semibold,
-  },
-  filterTextActive: {
-    color: Colors.textInverse,
-  },
-  filterTextInactive: {
+    fontWeight: Typography.weights.medium,
     color: Colors.textMuted,
   },
-  countRow: {
+  floorChipTextActive: {
+    color: Colors.textInverse,
+    fontWeight: Typography.weights.semibold,
+  },
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    paddingBottom: Spacing.xl,
+    gap: Spacing.sm,
+  },
+  roomCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.base,
+  },
+  cardMain: {
+    gap: Spacing.xs,
+  },
+  nameRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.xs,
   },
-  countText: {
-    fontSize: Typography.sizes.xs,
+  roomName: {
+    fontSize: Typography.sizes.base,
     fontWeight: Typography.weights.bold,
-    color: Colors.textMain,
+    color: Colors.navy,
+    flex: 1,
+    marginRight: Spacing.sm,
   },
-  activeRatio: {
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: Spacing.xs,
+  },
+  roomMeta: {
     fontSize: Typography.sizes.xs,
-    color: Colors.primary,
-    fontWeight: Typography.weights.semibold,
+    color: Colors.textMuted,
   },
-  emptyContainer: {
-    paddingVertical: Spacing.xl,
+  energyWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  energyValue: {
+    fontSize: Typography.sizes.sm,
+    fontWeight: Typography.weights.bold,
+    color: Colors.navy,
+  },
+  empty: {
+    padding: Spacing.xl,
     alignItems: 'center',
   },
   emptyText: {
