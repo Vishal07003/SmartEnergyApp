@@ -47,23 +47,22 @@ export const RoomDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
     fetchDetails();
   }, [roomId]);
 
-  const handleToggleChannel = (deviceId: string, channelId: number) => {
-    setDevices(prevDevices =>
-      prevDevices.map(d => {
-        if (d.id === deviceId) {
-          return {
-            ...d,
-            channels: d.channels.map(ch => {
-              if (ch.channelId === channelId && !ch.safetyLocked) {
-                return { ...ch, isOn: !ch.isOn };
-              }
-              return ch;
-            }),
-          };
-        }
-        return d;
-      })
-    );
+  const handleToggleChannel = async (deviceId: string, channelId: number) => {
+    const targetDev = devices.find(d => d.id === deviceId);
+    if (!targetDev || targetDev.status !== 'ONLINE') {
+      return;
+    }
+    const ch = targetDev.channels.find(c => c.channelId === channelId);
+    if (!ch || ch.safetyLocked) return;
+
+    try {
+      await mockApi.toggleDeviceChannel(deviceId, channelId, !ch.isOn);
+      // Refresh devices after command dispatch
+      const updatedDevices = await mockApi.getDevices();
+      setDevices(updatedDevices.filter(d => (room?.connectedDeviceIds || []).includes(d.id)));
+    } catch {
+      // Retain existing state on failure
+    }
   };
 
   if (loading || !room) {
