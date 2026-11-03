@@ -9,8 +9,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
-import { AppScreenContainer } from '../../components/common';
+import { Button, AppScreenContainer } from '../../components/common';
 import { LoadDynamicsChart } from '../../components/analytics';
+import { mockAnalyticsData } from '../../services/mockData/analyticsData';
 import { mockApi } from '../../services/api';
 import { TimeHorizon, PeriodAnalyticsData } from '../../types';
 
@@ -19,13 +20,20 @@ export const AnalyticsScreen: React.FC = () => {
   const [analyticsData, setAnalyticsData] = useState<PeriodAnalyticsData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchAnalytics = async (horizon: TimeHorizon) => {
+    setLoading(true);
+    setErrorMessage(null);
     try {
       const data = await mockApi.getAnalyticsByHorizon(horizon);
-      setAnalyticsData(data);
+      if (data) {
+        setAnalyticsData(data);
+      } else {
+        setErrorMessage('No analytics data available for this time range.');
+      }
     } catch {
-      // Handled via fallback
+      setErrorMessage('Unable to load analytics. Tap below to retry.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -47,11 +55,32 @@ export const AnalyticsScreen: React.FC = () => {
     { label: 'This Month', value: 'Month' },
   ];
 
-  if (loading || !analyticsData) {
+  if (loading && !refreshing) {
     return (
       <AppScreenContainer applyTopInset applyBottomInset={false} backgroundColor={Colors.background}>
         <View style={styles.center}>
           <ActivityIndicator size="small" color={Colors.primary} />
+          <Text style={styles.loadingText}>Loading analytics...</Text>
+        </View>
+      </AppScreenContainer>
+    );
+  }
+
+  if (errorMessage || !analyticsData) {
+    return (
+      <AppScreenContainer applyTopInset applyBottomInset={false} backgroundColor={Colors.background}>
+        <View style={styles.center}>
+          <Text style={styles.errorTitle}>Analytics Unavailable</Text>
+          <Text style={styles.errorSubtitle}>
+            {errorMessage || 'No energy analytics recorded for this period.'}
+          </Text>
+          <TouchableOpacity
+            style={styles.retryBtn}
+            onPress={() => fetchAnalytics(selectedHorizon)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
         </View>
       </AppScreenContainer>
     );
@@ -173,6 +202,38 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  loadingText: {
+    fontSize: Typography.sizes.sm,
+    color: Colors.textMuted,
+    marginTop: Spacing.md,
+  },
+  errorTitle: {
+    fontSize: Typography.sizes.lg,
+    fontWeight: Typography.weights.bold,
+    color: Colors.heroNavy,
+    marginBottom: Spacing.xs,
+    textAlign: 'center',
+  },
+  errorSubtitle: {
+    fontSize: Typography.sizes.sm,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginBottom: Spacing.lg,
+  },
+  retryBtn: {
+    height: 48,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  retryText: {
+    fontSize: Typography.sizes.base,
+    fontWeight: Typography.weights.semibold,
+    color: Colors.textInverse,
   },
   header: {
     flexDirection: 'row',
@@ -195,12 +256,13 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: 3,
+    padding: 4,
     marginBottom: Spacing.base,
   },
   tab: {
     flex: 1,
-    paddingVertical: 7,
+    height: 44,
+    justifyContent: 'center',
     alignItems: 'center',
     borderRadius: BorderRadius.sm,
   },
@@ -208,7 +270,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.navy,
   },
   tabText: {
-    fontSize: Typography.sizes.xs,
+    fontSize: Typography.sizes.sm,
     fontWeight: Typography.weights.medium,
     color: Colors.textMuted,
   },
