@@ -38,7 +38,7 @@ export const DeviceDetailsScreen: React.FC<Props> = ({ route }) => {
     fetchDevice();
   }, [deviceId]);
 
-  const handleToggleChannel = (channelId: number, label: string) => {
+  const handleToggleChannel = async (channelId: number, label: string) => {
     if (!device) return;
 
     const target = device.channels.find(c => c.channelId === channelId);
@@ -55,15 +55,17 @@ export const DeviceDetailsScreen: React.FC<Props> = ({ route }) => {
       return;
     }
 
-    setDevice(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        channels: prev.channels.map(ch =>
-          ch.channelId === channelId ? { ...ch, isOn: !ch.isOn } : ch
-        ),
-      };
-    });
+    try {
+      await mockApi.toggleDeviceChannel(device.id, channelId, !target?.isOn);
+      Alert.alert('Command Queued', `Command dispatched for ${label}. Awaiting hardware acknowledgment.`);
+      // Refresh current device state from backend
+      const updated = await mockApi.getDeviceById(device.id);
+      if (updated) {
+        setDevice(updated);
+      }
+    } catch (err: any) {
+      Alert.alert('Control Error', err.message || 'Unable to dispatch command.');
+    }
   };
 
   if (loading || !device) {
