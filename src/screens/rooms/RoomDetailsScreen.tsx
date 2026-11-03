@@ -197,7 +197,7 @@ export const RoomDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
                     disabled={ch.safetyLocked || dev.status !== 'ONLINE'}
                     onValueChange={() => handleToggleChannel(dev.id, ch.channelId)}
                     trackColor={{ false: Colors.border, true: Colors.primaryLight }}
-                    thumbColor={ch.isOn ? Colors.primary : Colors.textSubtle}
+                    thumbColor={ch.isOn && dev.status === 'ONLINE' ? Colors.primary : Colors.textSubtle}
                   />
                 </View>
               ))}
