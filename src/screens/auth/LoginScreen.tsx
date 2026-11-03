@@ -38,18 +38,18 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
             <Icon name="bolt" size={24} color={Colors.primary} />
           </View>
           <Text style={styles.title}>Smart Energy Manager</Text>
-          <Text style={styles.subtitle}>Institutional Staff & IoT Telemetry Portal</Text>
+          <Text style={styles.subtitle}>Unified Energy Monitoring & IoT Portal</Text>
         </View>
 
         <Card style={styles.card}>
-          <Text style={styles.formTitle}>Staff Sign In</Text>
+          <Text style={styles.formTitle}>Sign In</Text>
 
           <Input
             label="Username or Email"
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
-            placeholder="e.g. admin or staff_id"
+            placeholder="Enter your username or email"
           />
 
           <Input
@@ -68,17 +68,25 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
           </TouchableOpacity>
 
           <Button
-            title="Sign In to Dashboard"
+            title="Sign In"
             onPress={handleLogin}
             loading={loading}
             style={styles.submitBtn}
           />
+
+          <TouchableOpacity
+            style={styles.registerBtn}
+            onPress={() => navigation.navigate('Register')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.registerBtnText}>Don't have an account? Create one</Text>
+          </TouchableOpacity>
         </Card>
 
         <View style={styles.footerNote}>
           <Icon name="shield" size={14} color={Colors.textMuted} />
           <Text style={styles.footerText}>
-            Restricted to authorized faculty, lab technicians & staff.
+            Secure JWT authentication with email verification.
           </Text>
         </View>
       </AppKeyboardAwareView>
@@ -140,6 +148,17 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     marginTop: Spacing.xs,
+  },
+  registerBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+    marginTop: Spacing.md,
+  },
+  registerBtnText: {
+    fontSize: Typography.sizes.sm,
+    color: Colors.primary,
+    fontWeight: Typography.weights.semibold,
   },
   footerNote: {
     flexDirection: 'row',
