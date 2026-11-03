@@ -140,7 +140,7 @@ export const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
           <View style={styles.header}>
             <View>
               <Text style={styles.headerTitle}>Register IoT Device</Text>
-              <Text style={styles.headerSub}>Admin Hardware Provisioning</Text>
+              <Text style={styles.headerSub}>Campus Hardware Provisioning</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
               <X size={20} color={Colors.textMuted} />
