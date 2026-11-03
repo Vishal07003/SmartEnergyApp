@@ -25,7 +25,7 @@ export const OccupancyBadge: React.FC<{ state: OccupancyState; style?: ViewStyle
       case 'ACTIVE':
         return { label: 'Active', variant: 'success' as BadgeVariant };
       case 'IDLE_TRANSITION':
-        return { label: 'Idle Transition', variant: 'warning' as BadgeVariant };
+        return { label: 'Idle', variant: 'warning' as BadgeVariant };
       case 'EMPTY':
       default:
         return { label: 'Empty', variant: 'neutral' as BadgeVariant };
