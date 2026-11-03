@@ -8,6 +8,14 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (username: string, pass: string) => Promise<void>;
+  register: (payload: {
+    username: string;
+    email: string;
+    password: string;
+    password_confirm: string;
+    first_name?: string;
+    last_name?: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -46,6 +54,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const register = async (payload: {
+    username: string;
+    email: string;
+    password: string;
+    password_confirm: string;
+    first_name?: string;
+    last_name?: string;
+  }) => {
+    setIsLoading(true);
+    try {
+      const registeredUser = await liveApi.register(payload);
+      setUser(registeredUser);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       await liveApi.logout();
@@ -70,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: Boolean(user),
         isLoading,
         login,
+        register,
         logout,
         refreshProfile,
       }}
