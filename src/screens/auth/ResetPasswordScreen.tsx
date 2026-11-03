@@ -4,16 +4,18 @@ import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme
 import { Card, Button, Input, AppScreenContainer, AppKeyboardAwareView, Icon } from '../../components/common';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/types';
+import { liveApi } from '../../services/api';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 
 export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
+  const email = route.params?.email || '';
   const [token, setToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleUpdatePassword = () => {
+  const handleUpdatePassword = async () => {
     if (!token.trim() || !newPassword.trim()) {
       Alert.alert('Required', 'Please complete all required security fields.');
       return;
@@ -24,14 +26,23 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await liveApi.resetPassword({
+        email,
+        token: token.trim(),
+        new_password: newPassword,
+        confirm_new_password: confirmPassword,
+      });
       Alert.alert(
         'Password Updated',
-        'Your staff credentials have been updated. Please sign in.',
+        'Your password has been updated successfully. Please sign in.',
         [{ text: 'Sign In', onPress: () => navigation.navigate('Login') }]
       );
-    }, 700);
+    } catch (err: any) {
+      Alert.alert('Update Failed', err.message || 'Invalid or expired token.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
