@@ -185,13 +185,18 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
 
                   {hasRelay && (
                     <View style={styles.switchArea}>
-                      <Switch
-                        value={anyRelayOn}
-                        disabled={!isOnline}
-                        onValueChange={val => handleToggleMaster(dev, val)}
-                        trackColor={{ false: Colors.border, true: Colors.primaryLight }}
-                        thumbColor={anyRelayOn ? Colors.primary : Colors.textSubtle}
-                      />
+                      {isOnline ? (
+                        <Switch
+                          value={anyRelayOn}
+                          onValueChange={val => handleToggleMaster(dev, val)}
+                          trackColor={{ false: Colors.border, true: Colors.primaryLight }}
+                          thumbColor={anyRelayOn ? Colors.primary : Colors.textSubtle}
+                        />
+                      ) : (
+                        <View style={styles.unavailableBadge}>
+                          <Text style={styles.unavailableText}>OFFLINE</Text>
+                        </View>
+                      )}
                     </View>
                   )}
                 </View>
@@ -251,13 +256,13 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    paddingHorizontal: Spacing.sm,
-    height: 40,
+    paddingHorizontal: Spacing.md,
+    height: 48,
     marginBottom: Spacing.sm,
   },
   searchInput: {
     flex: 1,
-    fontSize: Typography.sizes.sm,
+    fontSize: Typography.sizes.base,
     color: Colors.textMain,
     marginLeft: Spacing.xs,
     paddingVertical: 0,
@@ -268,8 +273,10 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    height: 38,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: BorderRadius.full,
     backgroundColor: Colors.surface,
     borderWidth: 1,
@@ -301,6 +308,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     padding: Spacing.base,
+    minHeight: 80,
+    justifyContent: 'center',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -334,6 +343,20 @@ const styles = StyleSheet.create({
   },
   switchArea: {
     transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }],
+  },
+  unavailableBadge: {
+    backgroundColor: Colors.surfaceSubtle,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.xs,
+  },
+  unavailableText: {
+    fontSize: Typography.sizes.xxs,
+    fontWeight: Typography.weights.bold,
+    color: Colors.textMuted,
+    letterSpacing: 0.5,
   },
   cardFooter: {
     flexDirection: 'row',
