@@ -50,15 +50,15 @@ export const Colors = {
 export const Typography = {
   fontFamily: 'System',
   sizes: {
-    xxs: 10,
-    xs: 11,
+    xxs: 11,
+    xs: 12,
     sm: 13,
     base: 15,
     md: 17,
     lg: 19,
     xl: 22,
-    xxl: 28,
-    display: 34,
+    xxl: 25,
+    display: 32,
   },
   weights: {
     regular: '400' as const,
@@ -68,9 +68,9 @@ export const Typography = {
     black: '800' as const,
   },
   lineHeights: {
-    tight: 1.15,
-    normal: 1.35,
-    relaxed: 1.55,
+    tight: 1.2,
+    normal: 1.4,
+    relaxed: 1.6,
   },
 } as const;
 
