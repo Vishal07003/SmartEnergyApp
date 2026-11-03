@@ -6,20 +6,18 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Switch,
   RefreshControl,
+  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Search, ChevronRight } from 'lucide-react-native';
 import { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
 import { AppScreenContainer } from '../../components/common';
-import {
-  DeviceCampusLoadBanner,
-  DetailedDeviceCard,
-  QuickDeviceConfig,
-} from '../../components/devices';
 import { mockApi } from '../../services/api';
 import { IoTDevice } from '../../types';
 
@@ -33,14 +31,14 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedFilter, setSelectedFilter] = useState<'All' | 'Online' | 'Offline'>('All');
 
   const loadDevices = async () => {
     try {
       const data = await mockApi.getDevices();
       setDevices(data);
     } catch {
-      Alert.alert('Error', 'Unable to load connected devices.');
+      // Resilient error handling
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -56,49 +54,34 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
     loadDevices();
   };
 
-  const categoryFilters = ['All', 'Labs', 'Lights', 'Fans & HVAC'];
-
   const filteredDevices = useMemo(() => {
     return devices.filter(dev => {
       const query = searchQuery.toLowerCase();
       const matchesSearch =
         dev.name.toLowerCase().includes(query) ||
-        dev.hardwareId.toLowerCase().includes(query) ||
         dev.roomName.toLowerCase().includes(query) ||
-        dev.type.toLowerCase().includes(query);
+        dev.hardwareId.toLowerCase().includes(query);
 
-      let matchesCat = true;
-      if (selectedCategory === 'Labs') {
-        matchesCat = dev.type === 'ESP32_NODE' || dev.type === 'CURRENT_SENSOR' || dev.name.includes('Lab');
-      } else if (selectedCategory === 'Lights') {
-        matchesCat = dev.type === 'LIGHTING_BANK' || dev.name.includes('Lighting') || dev.channels.some(c => c.label.includes('Light') || c.label.includes('LED'));
-      } else if (selectedCategory === 'Fans & HVAC') {
-        matchesCat = dev.type === 'HVAC_FAN_CONTROLLER' || dev.channels.some(c => c.label.includes('Fan') || c.label.includes('Air') || c.label.includes('Blower'));
-      }
+      let matchesStatus = true;
+      if (selectedFilter === 'Online') matchesStatus = dev.status === 'ONLINE';
+      if (selectedFilter === 'Offline') matchesStatus = dev.status !== 'ONLINE';
 
-      return matchesSearch && matchesCat;
+      return matchesSearch && matchesStatus;
     });
-  }, [devices, searchQuery, selectedCategory]);
-
-  const handleDevicePress = (device: IoTDevice) => {
-    navigation.navigate('DeviceDetails', {
-      deviceId: device.id,
-      deviceName: device.name,
-    });
-  };
+  }, [devices, searchQuery, selectedFilter]);
 
   const handleToggleMaster = (device: IoTDevice, newState: boolean) => {
+    if (device.status !== 'ONLINE') {
+      Alert.alert('Device Offline', 'Cannot send commands to an offline device.');
+      return;
+    }
+
     setDevices(prev =>
       prev.map(d => {
         if (d.id === device.id) {
           return {
             ...d,
-            channels: d.channels.map(ch => {
-              if (!ch.safetyLocked) {
-                return { ...ch, isOn: newState };
-              }
-              return ch;
-            }),
+            channels: d.channels.map(ch => (ch.safetyLocked ? ch : { ...ch, isOn: newState })),
           };
         }
         return d;
@@ -106,40 +89,31 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
     );
   };
 
-  const totalLiveWatts = devices.reduce(
-    (sum, d) => sum + d.channels.reduce((chSum, ch) => chSum + (ch.isOn ? ch.powerWatts : 0), 0),
-    0
-  );
-
-  const onlineCount = devices.filter(d => d.status === 'ONLINE').length;
-  const warningCount = devices.filter(d => d.status === 'DEGRADED').length;
-  const offlineCount = devices.filter(d => d.status === 'OFFLINE').length;
+  if (loading) {
+    return (
+      <AppScreenContainer applyTopInset applyBottomInset={false} backgroundColor={Colors.background}>
+        <View style={styles.center}>
+          <ActivityIndicator size="small" color={Colors.primary} />
+        </View>
+      </AppScreenContainer>
+    );
+  }
 
   return (
     <AppScreenContainer applyTopInset applyBottomInset={false} backgroundColor={Colors.background}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[Colors.primary]}
-            tintColor={Colors.primary}
-          />
-        }
-      >
-        {/* Title Header */}
+      <View style={styles.container}>
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.screenTitle}>Device Management</Text>
+          <Text style={styles.title}>Devices</Text>
+          <Text style={styles.countText}>{filteredDevices.length} devices</Text>
         </View>
 
-        {/* Search Bar */}
+        {/* Search */}
         <View style={styles.searchBar}>
+          <Search size={16} color={Colors.textMuted} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search device or room..."
+            placeholder="Search devices or rooms..."
             placeholderTextColor={Colors.textSubtle}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -147,73 +121,99 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
           />
         </View>
 
-        {/* Filter Tabs */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterPillContainer}
-        >
-          {categoryFilters.map(cat => {
-            const isSelected = selectedCategory === cat;
+        {/* Status Filters: All, Online, Offline */}
+        <View style={styles.filterRow}>
+          {(['All', 'Online', 'Offline'] as const).map(tab => {
+            const isSelected = selectedFilter === tab;
             return (
               <TouchableOpacity
-                key={cat}
+                key={tab}
+                style={[styles.filterChip, isSelected && styles.filterChipActive]}
+                onPress={() => setSelectedFilter(tab)}
                 activeOpacity={0.8}
-                onPress={() => setSelectedCategory(cat)}
-                style={[
-                  styles.filterPill,
-                  isSelected ? styles.filterPillActive : styles.filterPillInactive,
-                ]}
               >
-                <Text
-                  style={[
-                    styles.filterPillText,
-                    isSelected ? styles.filterTextActive : styles.filterTextInactive,
-                  ]}
-                >
-                  {cat}
+                <Text style={[styles.filterChipText, isSelected && styles.filterChipTextActive]}>
+                  {tab}
                 </Text>
               </TouchableOpacity>
             );
           })}
-        </ScrollView>
-
-        {/* Campus Load Summary */}
-        <DeviceCampusLoadBanner
-          liveWatts={totalLiveWatts}
-          totalDevices={devices.length}
-          onlineCount={onlineCount}
-          warningCount={warningCount}
-          offlineCount={offlineCount}
-        />
-
-        {/* Device Cards Section */}
-        <View style={styles.countRow}>
-          <Text style={styles.countText}>{filteredDevices.length} Controllers</Text>
         </View>
 
-        {loading ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Loading...</Text>
-          </View>
-        ) : filteredDevices.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No devices found.</Text>
-          </View>
-        ) : (
-          filteredDevices.map(device => (
-            <DetailedDeviceCard
-              key={device.id}
-              device={device}
-              onPress={handleDevicePress}
-              onToggleMaster={handleToggleMaster}
+        {/* Devices List */}
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[Colors.primary]}
+              tintColor={Colors.primary}
             />
-          ))
-        )}
+          }
+        >
+          {filteredDevices.map(dev => {
+            const isOnline = dev.status === 'ONLINE';
+            const hasRelay = dev.channels.length > 0;
+            const anyRelayOn = dev.channels.some(c => c.isOn);
+            const totalWatts = dev.channels.reduce((s, c) => s + (c.isOn ? c.powerWatts : 0), 0);
 
-        {/* Quick ESP32 Device Configuration Section */}
-        <QuickDeviceConfig />
-      </ScrollView>
+            return (
+              <TouchableOpacity
+                key={dev.id}
+                style={styles.deviceCard}
+                activeOpacity={0.88}
+                onPress={() => navigation.navigate('DeviceDetails', { deviceId: dev.id, deviceName: dev.name })}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.titleArea}>
+                    <View style={styles.nameRow}>
+                      <View
+                        style={[
+                          styles.dot,
+                          { backgroundColor: isOnline ? Colors.primary : Colors.textMuted },
+                        ]}
+                      />
+                      <Text style={styles.deviceName} numberOfLines={1}>
+                        {dev.name.replace('ESP32 Node - ', '')}
+                      </Text>
+                    </View>
+                    <Text style={styles.deviceRoom}>{dev.roomName}</Text>
+                  </View>
+
+                  {hasRelay && (
+                    <View style={styles.switchArea}>
+                      <Switch
+                        value={anyRelayOn}
+                        disabled={!isOnline}
+                        onValueChange={val => handleToggleMaster(dev, val)}
+                        trackColor={{ false: Colors.border, true: Colors.primaryLight }}
+                        thumbColor={anyRelayOn ? Colors.primary : Colors.textSubtle}
+                      />
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.cardFooter}>
+                  <Text style={styles.statusLabel}>
+                    {isOnline ? 'Online' : 'Offline'}
+                    {isOnline && totalWatts > 0 ? ` • ${totalWatts} W` : ''}
+                  </Text>
+                  <ChevronRight size={16} color={Colors.textSubtle} />
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+
+          {filteredDevices.length === 0 && (
+            <View style={styles.empty}>
+              <Text style={styles.emptyText}>No devices match the criteria</Text>
+            </View>
+          )}
+        </ScrollView>
+      </View>
     </AppScreenContainer>
   );
 };
@@ -221,70 +221,135 @@ export const DevicesScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: Spacing.base,
+    paddingTop: Spacing.sm,
   },
-  contentContainer: {
-    padding: Spacing.base,
-    paddingBottom: Spacing.xl,
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
     marginBottom: Spacing.sm,
   },
-  screenTitle: {
+  title: {
     fontSize: Typography.sizes.xl,
     fontWeight: Typography.weights.bold,
-    color: Colors.navyDark,
+    color: Colors.heroNavy,
+  },
+  countText: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.textMuted,
   },
   searchBar: {
-    marginBottom: Spacing.xs,
-  },
-  searchInput: {
-    height: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    height: 40,
+    marginBottom: Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
     fontSize: Typography.sizes.sm,
     color: Colors.textMain,
+    marginLeft: Spacing.xs,
+    paddingVertical: 0,
   },
-  filterPillContainer: {
-    paddingBottom: Spacing.sm,
+  filterRow: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
-  filterPill: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 5,
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: BorderRadius.full,
-    marginRight: Spacing.xs,
+    backgroundColor: Colors.surface,
     borderWidth: 1,
+    borderColor: Colors.border,
   },
-  filterPillActive: {
+  filterChipActive: {
     backgroundColor: Colors.navy,
     borderColor: Colors.navy,
   },
-  filterPillInactive: {
-    backgroundColor: Colors.surface,
-    borderColor: Colors.border,
-  },
-  filterPillText: {
+  filterChipText: {
     fontSize: Typography.sizes.xs,
-    fontWeight: Typography.weights.semibold,
-  },
-  filterTextActive: {
-    color: Colors.textInverse,
-  },
-  filterTextInactive: {
+    fontWeight: Typography.weights.medium,
     color: Colors.textMuted,
   },
-  countRow: {
-    marginBottom: Spacing.xs,
+  filterChipTextActive: {
+    color: Colors.textInverse,
+    fontWeight: Typography.weights.semibold,
   },
-  countText: {
-    fontSize: Typography.sizes.xs,
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    paddingBottom: Spacing.xl,
+    gap: Spacing.sm,
+  },
+  deviceCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.base,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  titleArea: {
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: Spacing.sm,
+  },
+  deviceName: {
+    fontSize: Typography.sizes.base,
     fontWeight: Typography.weights.bold,
-    color: Colors.textMain,
+    color: Colors.navy,
   },
-  emptyContainer: {
-    paddingVertical: Spacing.xl,
+  deviceRoom: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.textMuted,
+    marginTop: 2,
+    marginLeft: 16,
+  },
+  switchArea: {
+    transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }],
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+  },
+  statusLabel: {
+    fontSize: Typography.sizes.xs,
+    color: Colors.textMuted,
+  },
+  empty: {
+    padding: Spacing.xl,
     alignItems: 'center',
   },
   emptyText: {
