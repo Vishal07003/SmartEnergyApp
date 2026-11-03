@@ -14,8 +14,8 @@ export const QuickDeviceConfig: React.FC<QuickDeviceConfigProps> = ({ onSaveToES
 
   const handleSave = () => {
     Alert.alert(
-      'Simulate ESP32 Parameter Sync',
-      `[MOCK DEMO] Save automation policy parameters to connected ESP32 clusters?\n\n• Lux Ambient Dimming Threshold: ${luxThreshold} Lux\n• Vacancy Inactivity Cutoff Timer: ${timerMinutes} mins\n\nParameters are queued for the next MQTT downlink cycle.`,
+      'Deploy Policy Parameters',
+      `Dispatch automation policy parameters to connected ESP32 cluster?\n\n• Lux Ambient Dimming Threshold: ${luxThreshold} Lux\n• Vacancy Inactivity Cutoff Timer: ${timerMinutes} mins\n\nParameters are queued for the next MQTT downlink cycle.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -23,8 +23,8 @@ export const QuickDeviceConfig: React.FC<QuickDeviceConfigProps> = ({ onSaveToES
           onPress: () => {
             if (onSaveToESP32) onSaveToESP32(luxThreshold, timerMinutes);
             Alert.alert(
-              'Configuration Deployed (Demo)',
-              `Parameters synchronized across 5 active ESP32 nodes.\nTarget firmware ACK confirmed.`
+              'Configuration Dispatched',
+              `Parameters queued for target ESP32 nodes.\nAwaiting firmware downlink execution.`
             );
           },
         },
