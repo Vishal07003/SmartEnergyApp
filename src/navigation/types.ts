@@ -12,6 +12,7 @@ export type MainTabParamList = {
   RoomsTab: undefined;
   DevicesTab: undefined;
   AnalyticsTab: undefined;
+  AlertsTab: undefined;
   ProfileTab: undefined;
 };
 
