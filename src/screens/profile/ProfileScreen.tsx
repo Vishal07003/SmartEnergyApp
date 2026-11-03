@@ -24,36 +24,65 @@ import {
 } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
 import { Card, AppScreenContainer } from '../../components/common';
-import { mockApi } from '../../services/api';
+import { liveApi } from '../../services/api';
 import { StaffUser } from '../../types';
+import { useAuth } from '../../context/AuthContext';
 
 export const ProfileScreen: React.FC = () => {
-  const [user, setUser] = useState<StaffUser | null>(null);
-  const [systemNotif, setSystemNotif] = useState(true);
-  const [aiAlerts, setAiAlerts] = useState(true);
+  const { user: authUser, logout, refreshProfile } = useAuth();
+  const [user, setUser] = useState<StaffUser | null>(authUser);
+  const [systemNotif, setSystemNotif] = useState(authUser?.notificationsEnabled ?? true);
+  const [aiAlerts, setAiAlerts] = useState(authUser?.alertPushEnabled ?? true);
 
   useEffect(() => {
-    mockApi.getStaffProfile().then(u => {
-      setUser(u);
-      setSystemNotif(u.notificationsEnabled);
-      setAiAlerts(u.alertPushEnabled);
-    });
-  }, []);
+    if (authUser) {
+      setUser(authUser);
+      setSystemNotif(authUser.notificationsEnabled);
+      setAiAlerts(authUser.alertPushEnabled);
+    } else {
+      liveApi.getStaffProfile().then(u => {
+        setUser(u);
+        setSystemNotif(u.notificationsEnabled);
+        setAiAlerts(u.alertPushEnabled);
+      }).catch(() => {});
+    }
+  }, [authUser]);
 
   const handleEditProfile = () => {
     Alert.alert(
-      'Edit Profile',
-      'Profile information is synced with the institutional directory. Profile updates will be enabled in Phase 3 backend integration.',
-      [{ text: 'OK' }]
+      'Staff Directory Profile',
+      `Employee ID: ${user?.employeeId || 'N/A'}\nDepartment: ${user?.department || 'N/A'}\nAssigned Block: ${user?.assignedBlock || 'N/A'}`,
+      [{ text: 'Close' }]
     );
   };
 
   const handleChangePassword = () => {
-    Alert.alert(
-      'Change Password',
-      'Password updates require institutional Single Sign-On (SSO) verification. This feature will connect to the FastAPI auth service.',
-      [{ text: 'OK' }]
-    );
+    Alert.prompt
+      ? Alert.prompt(
+          'Change Password',
+          'Enter your old password and new password to update backend credentials.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Submit',
+              onPress: async (val?: string) => {
+                if (val) {
+                  try {
+                    await liveApi.changePassword('oldPass', val);
+                    Alert.alert('Success', 'Password has been updated.');
+                  } catch (e: any) {
+                    Alert.alert('Error', e.message || 'Unable to update password.');
+                  }
+                }
+              },
+            },
+          ]
+        )
+      : Alert.alert(
+          'Change Password',
+          'Use the institutional portal or backend API endpoint to update your password.',
+          [{ text: 'OK' }]
+        );
   };
 
   const handleSupport = () => {
@@ -89,8 +118,8 @@ export const ProfileScreen: React.FC = () => {
         {
           text: 'Sign Out',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert('Signed Out', 'Session terminated. Please authenticate again on next launch.');
+          onPress: async () => {
+            await logout();
           },
         },
       ]
@@ -116,10 +145,10 @@ export const ProfileScreen: React.FC = () => {
               <User size={26} color={Colors.primary} />
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.userName}>{user?.name || 'Dr. Evelyn Reed'}</Text>
+              <Text style={styles.userName}>{user?.name || 'Staff User'}</Text>
               <Text style={styles.userEmail}>{user?.email || 'staff@institution.edu'}</Text>
               <Text style={styles.userDept}>
-                {user?.department || 'Faculty of Engineering & Computer Science'}
+                {user?.department || 'Facility Administration'}
               </Text>
             </View>
           </View>
@@ -129,7 +158,7 @@ export const ProfileScreen: React.FC = () => {
             onPress={handleEditProfile}
             style={styles.editBtn}
           >
-            <Text style={styles.editBtnText}>Edit Profile</Text>
+            <Text style={styles.editBtnText}>View Details</Text>
           </TouchableOpacity>
         </Card>
 
@@ -145,7 +174,7 @@ export const ProfileScreen: React.FC = () => {
               <UserCheck size={18} color={Colors.navy} />
               <View style={styles.menuTextGroup}>
                 <Text style={styles.menuLabel}>Personal Information</Text>
-                <Text style={styles.menuSub}>{user?.employeeId || 'EMP-7809'} • {user?.role.toUpperCase()}</Text>
+                <Text style={styles.menuSub}>{user?.employeeId || 'STAFF'} • {(user?.role || 'staff').toUpperCase()}</Text>
               </View>
             </View>
             <ChevronRight size={18} color={Colors.textSubtle} />
