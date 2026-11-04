@@ -2,6 +2,7 @@ export type StaffRole = 'staff' | 'admin' | 'ADMIN' | 'STAFF';
 
 export interface StaffUser {
   id: string;
+  username?: string;
   name: string;
   email: string;
   phoneNumber: string;
