@@ -9,6 +9,13 @@ import { RoomDetailsScreen } from '../screens/rooms/RoomDetailsScreen';
 import { DeviceDetailsScreen } from '../screens/devices/DeviceDetailsScreen';
 import { AlertsScreen } from '../screens/alerts/AlertsScreen';
 import { AlertDetailsScreen } from '../screens/alerts/AlertDetailsScreen';
+import {
+  PersonalInfoScreen,
+  ChangePasswordScreen,
+  HelpSupportScreen,
+  PrivacyPolicyScreen,
+  AboutScreen,
+} from '../screens/profile';
 import { Colors } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
@@ -67,6 +74,31 @@ export const RootNavigator: React.FC = () => {
               name="AlertDetails"
               component={AlertDetailsScreen}
               options={({ route }) => ({ title: route.params.alertTitle })}
+            />
+            <Stack.Screen
+              name="PersonalInfo"
+              component={PersonalInfoScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="ChangePassword"
+              component={ChangePasswordScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="HelpSupport"
+              component={HelpSupportScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="PrivacyPolicy"
+              component={PrivacyPolicyScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="About"
+              component={AboutScreen}
+              options={{ headerShown: false }}
             />
           </>
         )}
