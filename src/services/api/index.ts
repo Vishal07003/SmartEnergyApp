@@ -1,5 +1,6 @@
-import { apiClient } from './client';
+import { apiClient, ApiError } from './client';
 import { sessionStorage, AuthTokens } from './session';
+import { API_CONFIG, getBaseApiUrl, getLocalApiUrl, getPcIpApiUrl } from './config';
 import {
   LoginResponse,
   UserProfileResponse,
@@ -397,6 +398,7 @@ class LiveApiService {
     const isAdmin = Boolean(u.is_staff || u.is_superuser || (u.role && u.role.toUpperCase() === 'ADMIN'));
     return {
       id: String(u.id),
+      username: u.username || '',
       name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.username,
       email: u.email,
       phoneNumber: u.phone_number || '',
@@ -416,6 +418,7 @@ class LiveApiService {
     const isAdmin = Boolean(u.is_staff || u.is_superuser || (prof && prof.role && prof.role.toUpperCase() === 'ADMIN'));
     return {
       id: String(u.id),
+      username: u.username || '',
       name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.username,
       email: u.email,
       phoneNumber: prof?.phone_number || '',
@@ -565,3 +568,5 @@ class LiveApiService {
 export const liveApi = new LiveApiService();
 // Alias mockApi to liveApi to seamlessly connect all screen imports while preserving existing method signatures
 export const mockApi = liveApi;
+export { apiClient, ApiError, API_CONFIG, getBaseApiUrl, getLocalApiUrl, getPcIpApiUrl, sessionStorage };
+
