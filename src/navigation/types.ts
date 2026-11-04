@@ -24,4 +24,9 @@ export type RootStackParamList = {
   DeviceDetails: { deviceId: string; deviceName: string };
   Alerts: undefined;
   AlertDetails: { alertId: string; alertTitle: string };
+  PersonalInfo: undefined;
+  ChangePassword: undefined;
+  HelpSupport: undefined;
+  PrivacyPolicy: undefined;
+  About: undefined;
 };
