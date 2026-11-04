@@ -8,10 +8,10 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   User,
-  Mail,
-  Building,
   KeyRound,
   Bell,
   ShieldAlert,
@@ -23,16 +23,21 @@ import {
   UserCheck,
 } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
-import { Card, AppScreenContainer } from '../../components/common';
+import { Card, AppScreenContainer, useToast } from '../../components/common';
 import { liveApi } from '../../services/api';
 import { StaffUser } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { RootStackParamList } from '../../navigation/types';
 
 export const ProfileScreen: React.FC = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user: authUser, logout, refreshProfile } = useAuth();
+  const { showToast } = useToast();
+
   const [user, setUser] = useState<StaffUser | null>(authUser);
   const [systemNotif, setSystemNotif] = useState(authUser?.notificationsEnabled ?? true);
   const [aiAlerts, setAiAlerts] = useState(authUser?.alertPushEnabled ?? true);
+  const [savingPrefs, setSavingPrefs] = useState(false);
 
   useEffect(() => {
     if (authUser) {
@@ -40,73 +45,59 @@ export const ProfileScreen: React.FC = () => {
       setSystemNotif(authUser.notificationsEnabled);
       setAiAlerts(authUser.alertPushEnabled);
     } else {
-      liveApi.getStaffProfile().then(u => {
-        setUser(u);
-        setSystemNotif(u.notificationsEnabled);
-        setAiAlerts(u.alertPushEnabled);
-      }).catch(() => {});
+      liveApi
+        .getStaffProfile()
+        .then(u => {
+          setUser(u);
+          setSystemNotif(u.notificationsEnabled);
+          setAiAlerts(u.alertPushEnabled);
+        })
+        .catch(() => {});
     }
   }, [authUser]);
 
-  const handleEditProfile = () => {
-    Alert.alert(
-      'Staff Directory Profile',
-      `Employee ID: ${user?.employeeId || 'N/A'}\nDepartment: ${user?.department || 'N/A'}\nAssigned Block: ${user?.assignedBlock || 'N/A'}`,
-      [{ text: 'Close' }]
-    );
+  const handleToggleSystemNotif = async (newValue: boolean) => {
+    setSystemNotif(newValue);
+    setSavingPrefs(true);
+    try {
+      await liveApi.updateStaffProfile({
+        profile: {
+          notifications_enabled: newValue,
+        },
+      });
+      await refreshProfile();
+      showToast(
+        newValue ? 'System notifications enabled' : 'System notifications disabled',
+        'info'
+      );
+    } catch {
+      setSystemNotif(!newValue);
+      showToast('Failed to update notification preference', 'error');
+    } finally {
+      setSavingPrefs(false);
+    }
   };
 
-  const handleChangePassword = () => {
-    Alert.prompt
-      ? Alert.prompt(
-          'Change Password',
-          'Enter your old password and new password to update backend credentials.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Submit',
-              onPress: async (val?: string) => {
-                if (val) {
-                  try {
-                    await liveApi.changePassword('oldPass', val);
-                    Alert.alert('Success', 'Password has been updated.');
-                  } catch (e: any) {
-                    Alert.alert('Error', e.message || 'Unable to update password.');
-                  }
-                }
-              },
-            },
-          ]
-        )
-      : Alert.alert(
-          'Change Password',
-          'Use the institutional portal or backend API endpoint to update your password.',
-          [{ text: 'OK' }]
-        );
-  };
-
-  const handleSupport = () => {
-    Alert.alert(
-      'Campus Support',
-      'Contact Campus Energy & Facility Desk:\nEmail: energy-support@institution.edu\nPhone: ext. 4200 (Engineering Complex)',
-      [{ text: 'Close' }]
-    );
-  };
-
-  const handlePrivacy = () => {
-    Alert.alert(
-      'Privacy Policy',
-      'Smart Energy Manager collects environmental and electrical telemetry strictly for energy optimization and facility automation. No personal biometric or audio recordings are stored.',
-      [{ text: 'Close' }]
-    );
-  };
-
-  const handleAbout = () => {
-    Alert.alert(
-      'About Smart Energy Manager',
-      'Smart Energy Manager v1.0.0\n\nAI-powered multi-sensor occupancy classification, energy monitoring, and automated load control architecture for educational institutions.\n\nDeveloped for Academic Engineering Complex.',
-      [{ text: 'Close' }]
-    );
+  const handleToggleAiAlerts = async (newValue: boolean) => {
+    setAiAlerts(newValue);
+    setSavingPrefs(true);
+    try {
+      await liveApi.updateStaffProfile({
+        profile: {
+          alert_push_enabled: newValue,
+        },
+      });
+      await refreshProfile();
+      showToast(
+        newValue ? 'AI critical alerts enabled' : 'AI critical alerts disabled',
+        'info'
+      );
+    } catch {
+      setAiAlerts(!newValue);
+      showToast('Failed to update alert preference', 'error');
+    } finally {
+      setSavingPrefs(false);
+    }
   };
 
   const handleSignOut = () => {
@@ -135,30 +126,30 @@ export const ProfileScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.screenTitle}>Staff Account</Text>
+          <Text style={styles.screenTitle}>Account</Text>
         </View>
 
-        {/* 1. Profile Card with Avatar & Edit Action */}
+        {/* 1. Account Summary Card */}
         <Card style={styles.profileCard}>
           <View style={styles.profileRow}>
             <View style={styles.avatar}>
               <User size={26} color={Colors.primary} />
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.userName}>{user?.name || 'Registered User'}</Text>
-              <Text style={styles.userEmail}>{user?.email || 'user@institution.edu'}</Text>
-              <Text style={styles.userDept}>
-                {user?.department || 'Campus Facility'}
+              <Text style={styles.userName}>
+                {user?.name || (user?.username ? user.username : 'Smart Energy Manager User')}
               </Text>
+              <Text style={styles.userEmail}>{user?.email || 'user@institution.edu'}</Text>
+              <Text style={styles.userSubtitle}>Smart Energy Manager User</Text>
             </View>
           </View>
 
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={handleEditProfile}
+            onPress={() => navigation.navigate('PersonalInfo')}
             style={styles.editBtn}
           >
-            <Text style={styles.editBtnText}>View Details</Text>
+            <Text style={styles.editBtnText}>Edit Profile</Text>
           </TouchableOpacity>
         </Card>
 
@@ -168,13 +159,13 @@ export const ProfileScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.menuItem}
             activeOpacity={0.7}
-            onPress={handleEditProfile}
+            onPress={() => navigation.navigate('PersonalInfo')}
           >
             <View style={styles.menuLeft}>
               <UserCheck size={18} color={Colors.navy} />
               <View style={styles.menuTextGroup}>
                 <Text style={styles.menuLabel}>Personal Information</Text>
-                <Text style={styles.menuSub}>{user?.employeeId || 'USR-01'} • Active Member</Text>
+                <Text style={styles.menuSub}>Username, name & email address</Text>
               </View>
             </View>
             <ChevronRight size={18} color={Colors.textSubtle} />
@@ -185,13 +176,13 @@ export const ProfileScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.menuItem}
             activeOpacity={0.7}
-            onPress={handleChangePassword}
+            onPress={() => navigation.navigate('ChangePassword')}
           >
             <View style={styles.menuLeft}>
               <KeyRound size={18} color={Colors.navy} />
               <View style={styles.menuTextGroup}>
                 <Text style={styles.menuLabel}>Change Password</Text>
-                <Text style={styles.menuSub}>Update credentials & SSO</Text>
+                <Text style={styles.menuSub}>Update credentials & password security</Text>
               </View>
             </View>
             <ChevronRight size={18} color={Colors.textSubtle} />
@@ -206,12 +197,13 @@ export const ProfileScreen: React.FC = () => {
               <Bell size={18} color={Colors.navy} />
               <View style={styles.menuTextGroup}>
                 <Text style={styles.menuLabel}>System Notifications</Text>
-                <Text style={styles.menuSub}>Relay switches & gateway sync updates</Text>
+                <Text style={styles.menuSub}>Relay switches & gateway telemetry updates</Text>
               </View>
             </View>
             <Switch
               value={systemNotif}
-              onValueChange={setSystemNotif}
+              disabled={savingPrefs}
+              onValueChange={handleToggleSystemNotif}
               trackColor={{ false: Colors.border, true: Colors.primaryLight }}
               thumbColor={systemNotif ? Colors.primary : Colors.textSubtle}
             />
@@ -224,12 +216,13 @@ export const ProfileScreen: React.FC = () => {
               <ShieldAlert size={18} color={Colors.navy} />
               <View style={styles.menuTextGroup}>
                 <Text style={styles.menuLabel}>AI Critical Alerts</Text>
-                <Text style={styles.menuSub}>Unoccupied load wastage & spikes</Text>
+                <Text style={styles.menuSub}>Unoccupied load wastage & consumption spikes</Text>
               </View>
             </View>
             <Switch
               value={aiAlerts}
-              onValueChange={setAiAlerts}
+              disabled={savingPrefs}
+              onValueChange={handleToggleAiAlerts}
               trackColor={{ false: Colors.border, true: Colors.primaryLight }}
               thumbColor={aiAlerts ? Colors.primary : Colors.textSubtle}
             />
@@ -242,7 +235,7 @@ export const ProfileScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.menuItem}
             activeOpacity={0.7}
-            onPress={handleSupport}
+            onPress={() => navigation.navigate('HelpSupport')}
           >
             <View style={styles.menuLeft}>
               <HelpCircle size={18} color={Colors.navy} />
@@ -256,7 +249,7 @@ export const ProfileScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.menuItem}
             activeOpacity={0.7}
-            onPress={handlePrivacy}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
           >
             <View style={styles.menuLeft}>
               <FileText size={18} color={Colors.navy} />
@@ -270,20 +263,20 @@ export const ProfileScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.menuItem}
             activeOpacity={0.7}
-            onPress={handleAbout}
+            onPress={() => navigation.navigate('About')}
           >
             <View style={styles.menuLeft}>
               <Info size={18} color={Colors.navy} />
               <View style={styles.menuTextGroup}>
                 <Text style={styles.menuLabel}>About Smart Energy Manager</Text>
-                <Text style={styles.menuSub}>Version 1.0.0 (Build 2026.10)</Text>
+                <Text style={styles.menuSub}>Version 1.0.0 (Build 2026.11)</Text>
               </View>
             </View>
             <ChevronRight size={18} color={Colors.textSubtle} />
           </TouchableOpacity>
         </Card>
 
-        {/* 5. Sign Out */}
+        {/* 5. Sign Out Button */}
         <TouchableOpacity
           style={styles.signOutBtn}
           activeOpacity={0.8}
@@ -293,8 +286,8 @@ export const ProfileScreen: React.FC = () => {
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 
-        {/* Footer Build Tag */}
-        <Text style={styles.footerBuild}>Smart Energy Manager • Academic Block 4 • IoT Telemetry v1.0</Text>
+        {/* Footer */}
+        <Text style={styles.footerBuild}>Smart Energy Manager • IoT Telemetry v1.0</Text>
       </ScrollView>
     </AppScreenContainer>
   );
@@ -346,9 +339,10 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginTop: 1,
   },
-  userDept: {
+  userSubtitle: {
     fontSize: Typography.sizes.xxs,
-    color: Colors.textSubtle,
+    color: Colors.primary,
+    fontWeight: Typography.weights.semibold,
     marginTop: 2,
   },
   editBtn: {
@@ -359,6 +353,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
   },
   editBtnText: {
     fontSize: Typography.sizes.xs,
@@ -384,6 +380,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.base,
     paddingVertical: Spacing.md,
+    minHeight: 52,
   },
   menuLeft: {
     flexDirection: 'row',
@@ -398,6 +395,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.sm,
     fontWeight: Typography.weights.semibold,
     color: Colors.textMain,
+    
   },
   menuSub: {
     fontSize: Typography.sizes.xxs,
@@ -419,6 +417,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     marginTop: Spacing.lg,
+    minHeight: 48,
   },
   signOutText: {
     fontSize: Typography.sizes.sm,
