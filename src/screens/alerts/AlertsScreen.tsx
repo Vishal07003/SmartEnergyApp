@@ -68,7 +68,7 @@ export const AlertsScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <AppScreenContainer applyTopInset={false} applyBottomInset={false} backgroundColor={Colors.background}>
+      <AppScreenContainer applyTopInset={true} applyBottomInset={false} backgroundColor={Colors.background}>
         {/* Navigation Bar Skeleton */}
         <View style={styles.navBar}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
@@ -123,7 +123,7 @@ export const AlertsScreen: React.FC = () => {
   }
 
   return (
-    <AppScreenContainer applyTopInset={false} applyBottomInset={false} backgroundColor={Colors.background}>
+    <AppScreenContainer applyTopInset={true} applyBottomInset={false} backgroundColor={Colors.background}>
       {/* Navigation Bar */}
       <View style={styles.navBar}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
