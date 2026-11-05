@@ -19,7 +19,7 @@ export const InstitutionalAllocationSection: React.FC<InstitutionalAllocationSec
 
       {/* Multi-Segment Stacked Progress Bar */}
       <View style={styles.segmentedBar}>
-        {allocations.map((item, idx) => {
+        {(allocations || []).map((item, idx) => {
           const colors = ['#087F5B', '#17324D', '#E8A23A', '#94A3B8'];
           const segmentColor = colors[idx % colors.length];
           return (
@@ -28,7 +28,7 @@ export const InstitutionalAllocationSection: React.FC<InstitutionalAllocationSec
               style={[
                 styles.barSegment,
                 {
-                  width: `${item.percentage}%`,
+                  width: `${item.percentage ?? 0}%`,
                   backgroundColor: segmentColor,
                 },
               ]}
@@ -39,7 +39,7 @@ export const InstitutionalAllocationSection: React.FC<InstitutionalAllocationSec
 
       {/* Item Breakdown List */}
       <View style={styles.list}>
-        {allocations.map((item, idx) => {
+        {(allocations || []).map((item, idx) => {
           const colors = ['#087F5B', '#17324D', '#E8A23A', '#94A3B8'];
           const segmentColor = colors[idx % colors.length];
 
@@ -61,8 +61,12 @@ export const InstitutionalAllocationSection: React.FC<InstitutionalAllocationSec
               </View>
 
               <View style={styles.rightCol}>
-                <Text style={styles.kwhText}>{item.consumptionKwh.toLocaleString()} kWh</Text>
-                <Text style={styles.percentText}>{item.percentage.toFixed(1)}%</Text>
+                <Text style={styles.kwhText}>
+                  {(item.consumptionKwh ?? 0).toLocaleString()} kWh
+                </Text>
+                <Text style={styles.percentText}>
+                  {(item.percentage ?? 0).toFixed(1)}%
+                </Text>
               </View>
             </View>
           );
