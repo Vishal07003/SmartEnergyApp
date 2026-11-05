@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { StaffUser } from '../types';
 import { liveApi } from '../services/api';
 import { sessionStorage } from '../services/api/session';
+import { ApiError } from '../services/api/client';
 
 interface AuthContextType {
   user: StaffUser | null;
@@ -28,13 +29,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const initAuth = async () => {
     try {
-      if (sessionStorage.isAuthenticated()) {
-        const profile = await liveApi.getStaffProfile();
-        setUser(profile);
+      // 1. Restore stored JWT tokens from Android Keystore / hardware-backed storage
+      const tokens = await sessionStorage.loadTokens();
+      
+      // 2. Load cached user profile immediately for instant offline session restoration
+      const cachedUser = sessionStorage.getCachedUser<StaffUser>();
+      if (cachedUser) {
+        setUser(cachedUser);
+      }
+
+      // 3. If tokens exist, synchronize latest profile from backend
+      if (tokens) {
+        try {
+          const profile = await liveApi.getStaffProfile();
+          setUser(profile);
+          await sessionStorage.setCachedUser(profile);
+        } catch (fetchErr: any) {
+          // If 401 Unauthorized or 403 Forbidden, token is genuinely invalid or revoked
+          if (fetchErr instanceof ApiError && (fetchErr.status === 401 || fetchErr.status === 403)) {
+            await sessionStorage.clearTokens();
+            setUser(null);
+          } else {
+            // For network errors (status 0), timeouts (status 408), or server 5xx:
+            // RETAIN THE SESSION AND CACHED USER. Do NOT clear tokens!
+            if (!cachedUser && sessionStorage.isAuthenticated()) {
+              // Create minimal fallback user placeholder if no cached user exists yet
+              const minimalUser: StaffUser = {
+                id: 'offline-user',
+                name: 'Authenticated User',
+                email: '',
+                phoneNumber: '',
+                employeeId: '',
+                department: '',
+                role: 'staff',
+                assignedBlock: '',
+                notificationsEnabled: true,
+                alertPushEnabled: true,
+                createdAt: new Date().toISOString(),
+              };
+              setUser(minimalUser);
+            }
+          }
+        }
       }
     } catch {
-      sessionStorage.clearTokens();
-      setUser(null);
+      // Storage read error
     } finally {
       setIsLoading(false);
     }
@@ -49,6 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const loggedInUser = await liveApi.login(username, pass);
       setUser(loggedInUser);
+      await sessionStorage.setCachedUser(loggedInUser);
     } finally {
       setIsLoading(false);
     }
@@ -66,16 +106,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const registeredUser = await liveApi.register(payload);
       setUser(registeredUser);
+      await sessionStorage.setCachedUser(registeredUser);
     } finally {
       setIsLoading(false);
     }
   };
 
   const logout = async () => {
+    setIsLoading(true);
     try {
       await liveApi.logout();
     } finally {
       setUser(null);
+      setIsLoading(false);
     }
   };
 
@@ -83,8 +126,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const profile = await liveApi.getStaffProfile();
       setUser(profile);
+      await sessionStorage.setCachedUser(profile);
     } catch {
-      // Ignored
+      // Ignored for temporary errors
     }
   };
 
@@ -112,4 +156,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-
