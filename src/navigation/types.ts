@@ -12,8 +12,6 @@ export type MainTabParamList = {
   HomeTab: undefined;
   RoomsTab: undefined;
   DevicesTab: undefined;
-  AnalyticsTab: undefined;
-  AlertsTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -22,6 +20,8 @@ export type RootStackParamList = {
   MainApp: NavigatorScreenParams<MainTabParamList>;
   RoomDetails: { roomId: string; roomName: string };
   DeviceDetails: { deviceId: string; deviceName: string };
+  AddDevice: undefined;
+  Analytics: undefined;
   Alerts: undefined;
   AlertDetails: { alertId: string; alertTitle: string };
   PersonalInfo: undefined;
