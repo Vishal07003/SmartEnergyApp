@@ -4,14 +4,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   ScrollView,
   findNodeHandle,
   Keyboard,
   Platform,
 } from 'react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
-import { Card, Button, Input, AppScreenContainer, Icon } from '../../components/common';
+import { Card, Button, Input, AppScreenContainer, Icon, useToast } from '../../components/common';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/types';
 import { useAuth } from '../../context/AuthContext';
@@ -29,6 +28,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [keyboardSpace, setKeyboardSpace] = useState(0);
 
   const { register } = useAuth();
+  const { showToast } = useToast();
   const scrollRef = useRef<React.ElementRef<typeof ScrollView>>(null);
 
   React.useEffect(() => {
@@ -67,12 +67,12 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleRegister = async () => {
     if (!username.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Required Fields', 'Username, email, and password are required.');
+      showToast('Username, email, and password are required.', 'warning', 3000, 'Required Fields');
       return;
     }
 
     if (password !== passwordConfirm) {
-      Alert.alert('Password Mismatch', 'The passwords entered do not match.');
+      showToast('The passwords entered do not match.', 'error', 3000, 'Password Mismatch');
       return;
     }
 
@@ -86,9 +86,9 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         password,
         password_confirm: passwordConfirm,
       });
-      Alert.alert('Account Created', 'Welcome to Smart Energy Manager.');
+      showToast('Welcome to Smart Energy Manager!', 'success', 3000, 'Account Created');
     } catch (err: any) {
-      Alert.alert('Registration Failed', err.message || 'Unable to register account.');
+      showToast(err.message || 'Unable to register account.', 'error', 3500, 'Registration Failed');
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
-import { Card, Button, Input, AppScreenContainer, AppKeyboardAwareView, Icon } from '../../components/common';
+import { Card, Button, Input, AppScreenContainer, AppKeyboardAwareView, Icon, useToast, useDialog } from '../../components/common';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/types';
 import { liveApi } from '../../services/api';
@@ -14,14 +14,16 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
+  const { showDialog } = useDialog();
 
   const handleUpdatePassword = async () => {
     if (!token.trim() || !newPassword.trim()) {
-      Alert.alert('Required', 'Please complete all required security fields.');
+      showToast('Please complete all required security fields.', 'warning', 3000, 'Incomplete Fields');
       return;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert('Mismatch', 'New password and confirmation do not match.');
+      showToast('New password and confirmation do not match.', 'error', 3000, 'Password Mismatch');
       return;
     }
 
@@ -33,13 +35,14 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
         new_password: newPassword,
         confirm_new_password: confirmPassword,
       });
-      Alert.alert(
-        'Password Updated',
-        'Your password has been updated successfully. Please sign in.',
-        [{ text: 'Sign In', onPress: () => navigation.navigate('Login') }]
-      );
+      showDialog({
+        type: 'success',
+        title: 'Password Updated',
+        message: 'Your password has been updated successfully. Please sign in.',
+        actions: [{ text: 'Sign In', style: 'default', onPress: () => navigation.navigate('Login') }],
+      });
     } catch (err: any) {
-      Alert.alert('Update Failed', err.message || 'Invalid or expired token.');
+      showToast(err.message || 'Invalid or expired token.', 'error', 3500, 'Update Failed');
     } finally {
       setLoading(false);
     }

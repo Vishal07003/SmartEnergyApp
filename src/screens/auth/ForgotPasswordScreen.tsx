@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
-import { Card, Button, Input, AppScreenContainer, AppKeyboardAwareView, Icon } from '../../components/common';
+import { Card, Button, Input, AppScreenContainer, AppKeyboardAwareView, Icon, useToast, useDialog } from '../../components/common';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/types';
 import { liveApi } from '../../services/api';
@@ -11,27 +11,31 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
+  const { showDialog } = useDialog();
 
   const handleResetRequest = async () => {
     if (!email.trim()) {
-      Alert.alert('Required', 'Please enter your registered email address.');
+      showToast('Please enter your registered email address.', 'warning', 3000, 'Required Field');
       return;
     }
     setLoading(true);
     try {
       const resp = await liveApi.forgotPassword(email.trim());
-      Alert.alert(
-        'Password Recovery Dispatched',
-        resp.detail || 'If an account exists for this email, password recovery instructions have been sent.',
-        [
+      showDialog({
+        type: 'info',
+        title: 'Recovery Email Sent',
+        message: resp.detail || 'If an account exists for this email, password recovery instructions have been sent.',
+        actions: [
           {
             text: 'Proceed to Reset',
+            style: 'default',
             onPress: () => navigation.navigate('ResetPassword', { email: email.trim() }),
           },
-        ]
-      );
+        ],
+      });
     } catch (err: any) {
-      Alert.alert('Request Failed', err.message || 'Unable to process reset request.');
+      showToast(err.message || 'Unable to process reset request.', 'error', 3500, 'Request Failed');
     } finally {
       setLoading(false);
     }

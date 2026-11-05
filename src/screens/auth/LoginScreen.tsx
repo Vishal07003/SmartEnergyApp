@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
-import { Card, Button, Input, AppScreenContainer, AppKeyboardAwareView, Icon } from '../../components/common';
+import { Card, Button, Input, AppScreenContainer, AppKeyboardAwareView, Icon, useToast } from '../../components/common';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/types';
 import { useAuth } from '../../context/AuthContext';
@@ -13,18 +13,20 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { showToast } = useToast();
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
-      Alert.alert('Required Fields', 'Please enter your username and password.');
+      showToast('Please enter your username and password.', 'warning', 3000, 'Required Fields');
       return;
     }
 
     setLoading(true);
     try {
       await login(username.trim(), password);
+      showToast('Welcome back to Smart Energy Manager', 'success', 2500, 'Signed In');
     } catch (err: any) {
-      Alert.alert('Authentication Failed', err.message || 'Invalid username or password.');
+      showToast(err.message || 'Invalid username or password.', 'error', 3500, 'Authentication Failed');
     } finally {
       setLoading(false);
     }
