@@ -9,16 +9,15 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronRight, ArrowLeft } from 'lucide-react-native';
 import { RootStackParamList } from '../../navigation/types';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
-import { AppScreenContainer } from '../../components/common';
+import { AppScreenContainer, Skeleton } from '../../components/common';
 import { mockApi } from '../../services/api';
 import { AIAlert } from '../../types';
 
 export const AlertsScreen: React.FC = () => {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  const [alerts, setAlerts] = useState<AIAlert[]>([]);
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();  const [alerts, setAlerts] = useState<AIAlert[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [selectedFilter, setSelectedFilter] = useState<'All' | 'Critical' | 'Warning'>('All');
@@ -44,12 +43,19 @@ export const AlertsScreen: React.FC = () => {
     loadAlerts();
   };
 
-  const handleAcknowledge = (id: string, e: any) => {
+  const handleAcknowledge = async (id: string, e: any) => {
     e.stopPropagation();
-    mockApi.acknowledgeAlert(id);
-    setAlerts(prev =>
-      prev.map(a => (a.id === id ? { ...a, isAcknowledged: true } : a))
-    );
+    try {
+      await mockApi.acknowledgeAlert(id);
+      setAlerts(prev =>
+        prev.map(a => (a.id === id ? { ...a, isAcknowledged: true } : a))
+      );
+    } catch {
+      // Optimistic update if backend error
+      setAlerts(prev =>
+        prev.map(a => (a.id === id ? { ...a, isAcknowledged: true } : a))
+      );
+    }
   };
 
   const filteredAlerts = useMemo(() => {
@@ -62,18 +68,73 @@ export const AlertsScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <AppScreenContainer applyTopInset applyBottomInset={false} backgroundColor={Colors.background}>
-        <View style={styles.center}>
-          <ActivityIndicator size="small" color={Colors.primary} />
+      <AppScreenContainer applyTopInset={false} applyBottomInset={false} backgroundColor={Colors.background}>
+        {/* Navigation Bar Skeleton */}
+        <View style={styles.navBar}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+            <ArrowLeft size={20} color={Colors.navy} />
+          </TouchableOpacity>
+          <Text style={styles.navTitle}>Alerts</Text>
+          <View style={styles.navSpacer} />
+        </View>
+
+        <View style={styles.container}>
+          {/* Header Skeleton */}
+          <View style={styles.header}>
+            <Skeleton width={100} height={26} borderRadius={6} />
+            <Skeleton width={80} height={14} borderRadius={4} />
+          </View>
+
+          {/* Filter Row Skeleton */}
+          <View style={{ flexDirection: 'row', paddingHorizontal: Spacing.base, gap: 8, marginBottom: Spacing.md }}>
+            <Skeleton width={64} height={32} borderRadius={16} />
+            <Skeleton width={80} height={32} borderRadius={16} />
+            <Skeleton width={80} height={32} borderRadius={16} />
+          </View>
+
+          {/* Alert Cards Skeleton */}
+          <View style={{ paddingHorizontal: Spacing.base, gap: Spacing.sm }}>
+            {[1, 2, 3].map(idx => (
+              <View
+                key={idx}
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 14,
+                  padding: 16,
+                  borderWidth: 1,
+                  borderColor: '#E2E8F0',
+                }}
+              >
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Skeleton width={60} height={20} borderRadius={4} />
+                    <Skeleton width={50} height={12} borderRadius={4} />
+                  </View>
+                  <Skeleton width={80} height={28} borderRadius={8} />
+                </View>
+                <Skeleton width="80%" height={16} borderRadius={4} style={{ marginBottom: 6 }} />
+                <Skeleton width="50%" height={12} borderRadius={4} />
+              </View>
+            ))}
+          </View>
         </View>
       </AppScreenContainer>
     );
   }
 
   return (
-    <AppScreenContainer applyTopInset applyBottomInset={false} backgroundColor={Colors.background}>
+    <AppScreenContainer applyTopInset={false} applyBottomInset={false} backgroundColor={Colors.background}>
+      {/* Navigation Bar */}
+      <View style={styles.navBar}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <ArrowLeft size={20} color={Colors.navy} />
+        </TouchableOpacity>
+        <Text style={styles.navTitle}>Alerts</Text>
+        <View style={styles.navSpacer} />
+      </View>
+
       <View style={styles.container}>
-        {/* Header */}
+        {/* Sub-header counter & filter */}
         <View style={styles.header}>
           <Text style={styles.title}>Alerts</Text>
           <Text style={styles.countText}>
@@ -117,6 +178,18 @@ export const AlertsScreen: React.FC = () => {
           {filteredAlerts.map(alert => {
             const isCrit = alert.severity === 'CRITICAL';
             const isWarn = alert.severity === 'WARNING';
+            const formattedTime = (() => {
+              try {
+                const d = new Date(alert.timestamp);
+                if (!isNaN(d.getTime())) {
+                  return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false });
+                }
+              } catch {}
+              // Fallback: extract HH:MM from ISO string
+              const tIdx = alert.timestamp.indexOf('T');
+              if (tIdx !== -1) return alert.timestamp.slice(tIdx + 1, tIdx + 6);
+              return alert.timestamp.slice(0, 5);
+            })();
 
             return (
               <TouchableOpacity
@@ -146,10 +219,10 @@ export const AlertsScreen: React.FC = () => {
                         {alert.severity}
                       </Text>
                     </View>
-                    <Text style={styles.timeText}>{alert.timestamp}</Text>
+                    <Text style={styles.timeText}>{formattedTime}</Text>
                   </View>
 
-                  {!alert.isAcknowledged && (
+                  {!alert.isAcknowledged ? (
                     <TouchableOpacity
                       style={styles.ackButton}
                       onPress={e => handleAcknowledge(alert.id, e)}
@@ -157,6 +230,10 @@ export const AlertsScreen: React.FC = () => {
                     >
                       <Text style={styles.ackText}>Acknowledge</Text>
                     </TouchableOpacity>
+                  ) : (
+                    <View style={styles.ackedBadge}>
+                      <Text style={styles.ackedText}>Acknowledged</Text>
+                    </View>
                   )}
                 </View>
 
@@ -183,10 +260,36 @@ export const AlertsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  navBar: {
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    backgroundColor: Colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+  },
+  navTitle: {
+    flex: 1,
+    fontSize: Typography.sizes.base,
+    fontWeight: Typography.weights.semibold,
+    color: Colors.navy,
+    textAlign: 'center',
+  },
+  navSpacer: {
+    width: 40,
+  },
   container: {
     flex: 1,
     paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.xs,
   },
   center: {
     flex: 1,
@@ -197,10 +300,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   title: {
-    fontSize: Typography.sizes.xl,
+    fontSize: Typography.sizes.lg,
     fontWeight: Typography.weights.bold,
     color: Colors.heroNavy,
   },
@@ -215,7 +318,7 @@ const styles = StyleSheet.create({
   },
   filterChip: {
     paddingHorizontal: 16,
-    height: 38,
+    height: 34,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: BorderRadius.full,
@@ -267,6 +370,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    marginRight: 8,
   },
   severityBadge: {
     paddingHorizontal: 8,
@@ -301,19 +406,34 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
   },
   ackButton: {
-    paddingHorizontal: 14,
-    height: 38,
+    paddingHorizontal: 12,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.surfaceSubtle,
+    backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
+    flexShrink: 0,
   },
   ackText: {
-    fontSize: Typography.sizes.sm,
+    fontSize: Typography.sizes.xs,
     fontWeight: Typography.weights.semibold,
     color: Colors.navy,
+  },
+  ackedBadge: {
+    paddingHorizontal: 10,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: BorderRadius.sm,
+    backgroundColor: '#E6F4EA',
+    flexShrink: 0,
+  },
+  ackedText: {
+    fontSize: Typography.sizes.xxs,
+    fontWeight: Typography.weights.semibold,
+    color: Colors.primaryDark,
   },
   cardBody: {
     marginTop: 2,
