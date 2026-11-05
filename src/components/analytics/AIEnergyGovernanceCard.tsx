@@ -43,7 +43,7 @@ export const AIEnergyGovernanceCard: React.FC<AIEnergyGovernanceCardProps> = ({
             <Sparkles size={14} color={Colors.primary} />
             <Text style={styles.metricLabel}>AI SMART SHEDDING</Text>
           </View>
-          <Text style={styles.metricVal}>{governance.smartSheddingKwh.toLocaleString()} kWh</Text>
+          <Text style={styles.metricVal}>{(governance.smartSheddingKwh ?? 0).toLocaleString()} kWh</Text>
           <Text style={styles.metricSub}>Dynamic daylight dimming & sleep</Text>
         </View>
 
@@ -52,7 +52,7 @@ export const AIEnergyGovernanceCard: React.FC<AIEnergyGovernanceCardProps> = ({
             <TrendingDown size={14} color={Colors.primary} />
             <Text style={styles.metricLabel}>COMPLETE LOAD CUT</Text>
           </View>
-          <Text style={styles.metricVal}>{governance.completeLoadCutKwh.toLocaleString()} kWh</Text>
+          <Text style={styles.metricVal}>{(governance.completeLoadCutKwh ?? 0).toLocaleString()} kWh</Text>
           <Text style={styles.metricSub}>Automated overnight relay cutoffs</Text>
         </View>
       </View>
