@@ -7,11 +7,10 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { X, Plus, Trash2 } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
-import { Button, Input } from '../../components/common';
+import { Button, Input, useToast, useDialog } from '../../components/common';
 import { Room } from '../../types';
 import { liveApi } from '../../services/api';
 import { DeviceCreatePayload } from '../../services/api/backendTypes';
@@ -38,6 +37,9 @@ export const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
   onSuccess,
   rooms,
 }) => {
+  const { showToast } = useToast();
+  const { showDialog } = useDialog();
+
   const [name, setName] = useState('');
   const [hardwareId, setHardwareId] = useState('');
   const [deviceType, setDeviceType] = useState('ESP32_NODE');
@@ -65,7 +67,7 @@ export const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
 
   const handleAddChannel = () => {
     if (channels.length >= 8) {
-      Alert.alert('Channel Limit', 'Maximum 8 relay channels supported per hardware node.');
+      showToast('Maximum 8 relay channels supported per hardware node.', 'warning', 3000, 'Channel Limit');
       return;
     }
     setChannels(prev => [
@@ -113,13 +115,22 @@ export const AddDeviceModal: React.FC<AddDeviceModalProps> = ({
     setLoading(true);
     try {
       await liveApi.registerDevice(payload);
-      Alert.alert(
-        'Device Registered',
-        `Device "${payload.name}" has been registered into campus inventory.\n\nStatus will remain UNKNOWN/OFFLINE until the physical ESP32 node delivers its first genuine authenticated heartbeat.`
-      );
-      resetForm();
-      onSuccess();
-      onClose();
+      showDialog({
+        type: 'success',
+        title: 'Device Registered',
+        message: `Device "${payload.name}" registered successfully.\n\nStatus will update once the device sends its initial heartbeat.`,
+        actions: [
+          {
+            text: 'Done',
+            style: 'default',
+            onPress: () => {
+              resetForm();
+              onSuccess();
+              onClose();
+            },
+          },
+        ],
+      });
     } catch (err: any) {
       const msg = err.data?.hardware_id
         ? Array.isArray(err.data.hardware_id)
