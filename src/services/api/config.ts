@@ -6,7 +6,7 @@ import { Platform } from 'react-native';
  */
 export const API_CONFIG = {
   // Host PC Wi-Fi LAN IP (for direct device connection on local Wi-Fi)
-  PC_IP: '192.168.31.8',
+  PC_IP: '192.168.31.8:8000',
   // Local loopback host (for ADB reverse tethering / desktop / iOS simulator)
   LOCAL_HOST: '127.0.0.1',
   // Android Emulator standard loopback proxy
@@ -22,7 +22,7 @@ export const API_CONFIG = {
    * - 'emulator': Android Studio emulator.
    * - 'auto': Uses PC IP on physical Android, 127.0.0.1 on other environments.
    */
-  USE_MODE: 'pc_ip' as 'pc_ip' | 'local' | 'emulator' | 'auto',
+  USE_MODE: 'auto' as 'pc_ip' | 'local' | 'emulator' | 'auto',
 };
 
 /**
