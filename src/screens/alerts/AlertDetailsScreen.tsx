@@ -4,13 +4,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
-import { AppScreenContainer, Button } from '../../components/common';
+import { AppScreenContainer, Button, useToast } from '../../components/common';
 import { mockApi } from '../../services/api';
 import { AIAlert } from '../../types';
 
@@ -21,6 +20,7 @@ export const AlertDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
   const [alert, setAlert] = useState<AIAlert | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [resolving, setResolving] = useState<boolean>(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchAlert = async () => {
@@ -41,6 +41,7 @@ export const AlertDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
     if (alert) {
       mockApi.acknowledgeAlert(alert.id);
       setAlert({ ...alert, isAcknowledged: true });
+      showToast('Alert acknowledged', 'success', 2500);
     }
   };
 
@@ -50,6 +51,7 @@ export const AlertDetailsScreen: React.FC<Props> = ({ route, navigation }) => {
       setTimeout(() => {
         mockApi.acknowledgeAlert(alert.id);
         setResolving(false);
+        showToast('Incident marked as resolved', 'success', 2500);
         navigation.goBack();
       }, 500);
     }
