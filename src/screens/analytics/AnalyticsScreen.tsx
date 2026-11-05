@@ -8,13 +8,16 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { ArrowLeft } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
-import { Button, AppScreenContainer } from '../../components/common';
+import { Button, AppScreenContainer, Skeleton } from '../../components/common';
 import { LoadDynamicsChart } from '../../components/analytics';
 import { liveApi } from '../../services/api';
 import { TimeHorizon, PeriodAnalyticsData } from '../../types';
 
 export const AnalyticsScreen: React.FC = () => {
+  const navigation = useNavigation();
   const [selectedHorizon, setSelectedHorizon] = useState<TimeHorizon>('Week');
   const [analyticsData, setAnalyticsData] = useState<PeriodAnalyticsData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -56,18 +59,65 @@ export const AnalyticsScreen: React.FC = () => {
 
   if (loading && !refreshing) {
     return (
-      <AppScreenContainer applyTopInset applyBottomInset={false} backgroundColor={Colors.background}>
-        <View style={styles.center}>
-          <ActivityIndicator size="small" color={Colors.primary} />
-          <Text style={styles.loadingText}>Loading analytics...</Text>
+      <AppScreenContainer applyTopInset={false} applyBottomInset={false} backgroundColor={Colors.background}>
+        <View style={styles.navBar}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+            <ArrowLeft size={20} color={Colors.navy} />
+          </TouchableOpacity>
+          <Text style={styles.navTitle}>Analytics & Telemetry</Text>
+          <View style={styles.navSpacer} />
         </View>
+        <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Header Skeleton */}
+          <View style={[styles.header, { alignItems: 'center' }]}>
+            <Skeleton width={120} height={26} borderRadius={6} />
+            <Skeleton width={140} height={14} borderRadius={4} />
+          </View>
+
+          {/* Horizon Selector Skeleton */}
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: Spacing.md }}>
+            <Skeleton width={80} height={36} borderRadius={18} />
+            <Skeleton width={100} height={36} borderRadius={18} />
+            <Skeleton width={100} height={36} borderRadius={18} />
+          </View>
+
+          {/* Total Consumption Card Skeleton */}
+          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: Spacing.md }}>
+            <Skeleton width={140} height={12} borderRadius={4} style={{ marginBottom: 8 }} />
+            <Skeleton width={160} height={32} borderRadius={6} style={{ marginBottom: 16 }} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Skeleton width={110} height={28} borderRadius={6} />
+              <Skeleton width={110} height={28} borderRadius={6} />
+            </View>
+          </View>
+
+          {/* Trend Chart Skeleton */}
+          <View style={{ marginBottom: Spacing.md }}>
+            <Skeleton width={150} height={20} borderRadius={6} style={{ marginBottom: Spacing.sm }} />
+            <Skeleton width="100%" height={180} borderRadius={16} />
+          </View>
+
+          {/* Top Consuming Rooms Skeleton */}
+          <View>
+            <Skeleton width={160} height={20} borderRadius={6} style={{ marginBottom: Spacing.sm }} />
+            <Skeleton width="100%" height={56} borderRadius={12} style={{ marginBottom: 8 }} />
+            <Skeleton width="100%" height={56} borderRadius={12} />
+          </View>
+        </ScrollView>
       </AppScreenContainer>
     );
   }
 
   if (errorMessage || !analyticsData) {
     return (
-      <AppScreenContainer applyTopInset applyBottomInset={false} backgroundColor={Colors.background}>
+      <AppScreenContainer applyTopInset={false} applyBottomInset={false} backgroundColor={Colors.background}>
+        <View style={styles.navBar}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+            <ArrowLeft size={20} color={Colors.navy} />
+          </TouchableOpacity>
+          <Text style={styles.navTitle}>Analytics & Telemetry</Text>
+          <View style={styles.navSpacer} />
+        </View>
         <View style={styles.center}>
           <Text style={styles.errorTitle}>Analytics Unavailable</Text>
           <Text style={styles.errorSubtitle}>
@@ -86,7 +136,16 @@ export const AnalyticsScreen: React.FC = () => {
   }
 
   return (
-    <AppScreenContainer applyTopInset applyBottomInset={false} backgroundColor={Colors.background}>
+    <AppScreenContainer applyTopInset={false} applyBottomInset={false} backgroundColor={Colors.background}>
+      {/* Back Navigation Bar */}
+      <View style={styles.navBar}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <ArrowLeft size={20} color={Colors.navy} />
+        </TouchableOpacity>
+        <Text style={styles.navTitle}>Analytics & Telemetry</Text>
+        <View style={styles.navSpacer} />
+      </View>
+
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
@@ -189,12 +248,38 @@ export const AnalyticsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  navBar: {
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+    backgroundColor: Colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+  },
+  navTitle: {
+    flex: 1,
+    fontSize: Typography.sizes.base,
+    fontWeight: Typography.weights.semibold,
+    color: Colors.navy,
+    textAlign: 'center',
+  },
+  navSpacer: {
+    width: 40,
+  },
   container: {
     flex: 1,
   },
   content: {
     paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.xs,
     paddingBottom: Spacing.xl,
   },
   center: {
@@ -238,7 +323,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   title: {
     fontSize: Typography.sizes.xl,
