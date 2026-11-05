@@ -7,4 +7,5 @@ export * from './Icon';
 export * from './AppScreenContainer';
 export * from './AppKeyboardAwareView';
 export * from './Toast';
+export * from './Dialog';
 export * from './Skeleton';
