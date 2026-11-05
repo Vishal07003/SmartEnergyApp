@@ -39,14 +39,14 @@ export const PeriodicHeroCard: React.FC<PeriodicHeroCardProps> = ({
       <View style={styles.metricsRow}>
         <View style={styles.kwhContainer}>
           <Text style={styles.kwhValue}>
-            {totalKwh >= 1000 ? totalKwh.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : totalKwh.toFixed(1)}
+            {(totalKwh ?? 0) >= 1000 ? (totalKwh ?? 0).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : (totalKwh ?? 0).toFixed(1)}
           </Text>
           <Text style={styles.kwhUnit}>kWh</Text>
         </View>
 
         <View style={styles.budgetPill}>
           <Text style={styles.budgetPillLabel}>Target</Text>
-          <Text style={styles.budgetPillValue}>{targetBudgetKwh.toLocaleString()} kWh</Text>
+          <Text style={styles.budgetPillValue}>{(targetBudgetKwh ?? 0).toLocaleString()} kWh</Text>
         </View>
       </View>
 
@@ -56,14 +56,14 @@ export const PeriodicHeroCard: React.FC<PeriodicHeroCardProps> = ({
           <View
             style={[
               styles.progressFill,
-              { width: `${Math.min((totalKwh / targetBudgetKwh) * 100, 100)}%` },
+              { width: `${Math.min(((totalKwh ?? 0) / (targetBudgetKwh || 1)) * 100, 100)}%` },
             ]}
           />
         </View>
         <View style={styles.budgetRow}>
           <Text style={styles.budgetText}>{periodLabel}</Text>
           <Text style={styles.budgetText}>
-            {((totalKwh / targetBudgetKwh) * 100).toFixed(1)}% of Budget Cap
+            {(((totalKwh ?? 0) / (targetBudgetKwh || 1)) * 100).toFixed(1)}% of Budget Cap
           </Text>
         </View>
       </View>
@@ -75,7 +75,7 @@ export const PeriodicHeroCard: React.FC<PeriodicHeroCardProps> = ({
             <Zap size={14} color="#34D399" />
             <Text style={styles.subTileLabel}>LIVE ESP32 DEMAND</Text>
           </View>
-          <Text style={styles.subTileValue}>{liveWatts.toLocaleString()} W</Text>
+          <Text style={styles.subTileValue}>{(liveWatts ?? 0).toLocaleString()} W</Text>
         </View>
 
         <View style={styles.subDivider} />
