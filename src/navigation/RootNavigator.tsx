@@ -7,6 +7,8 @@ import { AuthNavigator } from './AuthNavigator';
 import { MainTabNavigator } from './MainTabNavigator';
 import { RoomDetailsScreen } from '../screens/rooms/RoomDetailsScreen';
 import { DeviceDetailsScreen } from '../screens/devices/DeviceDetailsScreen';
+import { AddDeviceScreen } from '../screens/devices/AddDeviceScreen';
+import { AnalyticsScreen } from '../screens/analytics/AnalyticsScreen';
 import { AlertsScreen } from '../screens/alerts/AlertsScreen';
 import { AlertDetailsScreen } from '../screens/alerts/AlertDetailsScreen';
 import {
@@ -18,11 +20,18 @@ import {
 } from '../screens/profile';
 import { Colors } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
+import { fcmService } from '../services/fcm';
+import { useNavigationContainerRef } from '@react-navigation/native';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const navigationRef = useNavigationContainerRef<RootStackParamList>();
+
+  React.useEffect(() => {
+    fcmService.initialize(navigationRef);
+  }, [navigationRef]);
 
   if (isLoading) {
     return (
@@ -33,7 +42,7 @@ export const RootNavigator: React.FC = () => {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         screenOptions={{
           headerStyle: { backgroundColor: Colors.surface },
@@ -66,9 +75,19 @@ export const RootNavigator: React.FC = () => {
               options={({ route }) => ({ title: route.params.deviceName })}
             />
             <Stack.Screen
+              name="AddDevice"
+              component={AddDeviceScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Analytics"
+              component={AnalyticsScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
               name="Alerts"
               component={AlertsScreen}
-              options={{ title: 'Alerts' }}
+              options={{ headerShown: false }}
             />
             <Stack.Screen
               name="AlertDetails"
